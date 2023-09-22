@@ -17,12 +17,11 @@ SampleSheet=$1
 outDir=$2
 #outDir=ClinicalSamplesTestTaxprofiler
 
-DatabaseSheet=/medstore/Development/Metagenomics/TaxProfiler/TestSamples_FromMicro/TaxprofilerRun/database_sheet.csv
+DatabaseSheet=/medstore/Development/Metagenomics/TaxProfiler/TestSamples_FromMicro/TaxprofilerRun/Scripts/Taxprofiler-Metagenomics/database_sheet.csv
 taxdumpdir=/medstore/databases/taxprofiler/databases/taxpasta_taxonomy/taxdump
 hostindex=/medstore/databases/taxprofiler/databases/GRCH38/
 hostfasta=/medstore/databases/taxprofiler/databases/GRCH38/Homo_sapiens.GRCh38.dna.toplevel.canonical.fa
-MandaloreConfig=/medstore/Development/Metagenomics/TaxProfiler/TestSamples_FromMicro/TaxprofilerRun/Scripts/Taxprofiler-Metagenomics/database_sheet.csv
-
+MandaloreConfig=/medstore/Development/Metagenomics/TaxProfiler/TestSamples_FromMicro/TaxprofilerRun/Scripts/Taxprofiler-Metagenomics/configs/Mandalore_Taxprofiler.config
 
 # Skip Kaiju, try extracting as much reads as possible
 
@@ -35,11 +34,11 @@ MandaloreConfig=/medstore/Development/Metagenomics/TaxProfiler/TestSamples_FromM
 
 echo "
 
-nextflow run nf-core/taxprofiler --perform_shortread_qc --shortread_qc_tool 'fastp' --perform_shortread_hostremoval --shortread_hostremoval_index $hostindex --hostremoval_reference $hostfasta --save_preprocessed_reads --perform_shortread_complexityfilter --shortread_complexityfilter_tool 'bbduk' -profile singularity --input $SampleSheet --databases $DatabaseSheet --outdir $outDir -r 1.0.1 -c $MandaloreConfig --run_kraken2 --kraken2_save_readclassification --run_diamond --run_bracken --run_krona --run_krakenuniq --krakenuniq_save_readclassifications --run_metaphlan3 --save_hostremoval_unmapped -resume
+nextflow run nf-core/taxprofiler --perform_shortread_qc --shortread_qc_tool 'fastp' --perform_shortread_hostremoval --shortread_hostremoval_index $hostindex --hostremoval_reference $hostfasta --save_preprocessed_reads --perform_shortread_complexityfilter --shortread_complexityfilter_tool 'bbduk' -profile singularity --input $SampleSheet --databases $DatabaseSheet --outdir $outDir -r 1.1.0 -c $MandaloreConfig --run_kraken2 --kraken2_save_readclassifications --run_diamond --run_bracken --run_krona --run_metaphlan --save_hostremoval_unmapped --run_profile_standardisation --taxpasta_taxonomy_dir $taxdumpdir --taxpasta_add_name --taxpasta_add_rank --taxpasta_add_lineage -resume
 
 "
 
-nextflow run nf-core/taxprofiler --perform_shortread_qc --shortread_qc_tool 'fastp' --perform_shortread_hostremoval --shortread_hostremoval_index $hostindex --hostremoval_reference $hostfasta --save_preprocessed_reads --perform_shortread_complexityfilter --shortread_complexityfilter_tool 'bbduk' -profile singularity --input $SampleSheet --databases $DatabaseSheet --outdir $outDir -r 1.0.1 -c $MandaloreConfig --run_kraken2 --kraken2_save_readclassification --run_diamond --run_bracken --run_krona --run_krakenuniq --krakenuniq_save_readclassifications --run_metaphlan3 --save_hostremoval_unmapped -resume
+nextflow run nf-core/taxprofiler --perform_shortread_qc --shortread_qc_tool 'fastp' --perform_shortread_hostremoval --shortread_hostremoval_index $hostindex --hostremoval_reference $hostfasta --save_preprocessed_reads --perform_shortread_complexityfilter --shortread_complexityfilter_tool 'bbduk' -profile singularity --input $SampleSheet --databases $DatabaseSheet --outdir $outDir -r 1.1.0 -c $MandaloreConfig --run_kraken2 --kraken2_save_readclassifications --run_diamond --run_bracken --run_krona --run_metaphlan --save_hostremoval_unmapped --run_profile_standardisation --taxpasta_taxonomy_dir $taxdumpdir --taxpasta_add_name --taxpasta_add_rank --taxpasta_add_lineage -resume
 
 
 echo "Fin"
