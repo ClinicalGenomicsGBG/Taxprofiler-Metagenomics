@@ -22,12 +22,12 @@ source activate TaxProfiler
 
 ```
 
-Downlaod the newer version (tested on 1.0.1 for now)
+Downlaod the newer version (tested on 1.1.0)
 
 
 ```
 
-nf-core download taxprofiler -r 1.0.1
+nf-core download taxprofiler -r 1.1.0
 
 or 
 
