@@ -20,6 +20,8 @@ import psutil
 import subprocess
 import sys
 import time
+import xlsxwriter
+
 
 ## OBS OBS
 
@@ -429,6 +431,55 @@ def ParseMetaphlan3(taxprofdict, taxdump,dptresh, output, Samples, Outputfolders
 
 
 
+def ParseMetaphlan4(taxprofdict, taxdump,dptresh, output, Samples, Outputfolders):
+    """
+    """
+    subfolders = [ f.path for f in os.scandir(taxprofdict) if f.is_dir() ]
+    tool="metaphlan"
+    for i in subfolders:
+        subfolders_2=[ f.path for f in os.scandir(i) if f.is_dir() ] # Check subfolders in kraken2 dir
+        for k in subfolders_2:
+            if "Metaphlan4" in k:
+                Outputfolders.append(tool)
+                try:
+                    os.mkdir("%s/%s"%(output,tool))
+                except FileExistsError:
+                    logging.info('%s\tFolder already exists', time.ctime())
+                # Taxpasta
+                metaphlandb=k.split("/")[-1]
+                outTaxpasta= output+"/"+tool+"/"+ "Metaphlan4_" + metaphlandb + ".tsv"
+                command="/home/xabras/.conda/envs/TaxPasta/bin/taxpasta merge -p metaphlan -o %s --add-name --add-rank --add-lineage --taxonomy %s %s/*_profile.txt" %(outTaxpasta, taxdump, k)
+                subprocess.call(command, shell=True)
+                # Printing required files for plotting
+                Sampleorder=[]
+                with open(outTaxpasta, "r") as taxpasta:
+                    header = taxpasta.readline().split("\t")
+                    for i in header[4:]:                        
+                        samplename=i.split(metaphlandb+".metaphlan_profile")[0]
+                        Samples.append(samplename)
+                        Sampleorder.append([i,samplename,header.index(i)])
+                for i in Sampleorder: # loop through the Taxpasta file ones per sample, save to file!
+                    samplename=i[1]
+                    sampleindex=i[2]
+                    outforplot=output+"/"+tool+"/"+samplename+"CountsForplotting.txt"
+                    with open(outTaxpasta,"r") as taxpasta, open(outforplot, "w") as o:
+                        print("Taxonomy_nr\tTaxonomy_name\tCounts", file=o)
+                        next(taxpasta)
+                        next(taxpasta)
+                        for l in taxpasta:
+                            l=l.strip()
+                            TAXID=int(l.split("\t")[0])
+                            Counts=int(l.split("\t")[sampleindex])
+                            rank=l.split("\t")[2]
+                            if rank == "species":
+                                if Counts >= dptresh:
+                                    speciesid=l.split("\t")[0]
+                                    speciesname=l.split("\t")[1]
+                                    print(str(speciesid)+"\t"+str(speciesname)+"\t"+str(Counts), file=o)
+    return(Samples, Outputfolders)
+
+
+
 def plotting_withinEachTool(output,Outputfolders):
     """
     Here we look at each tool each sample by themselvses which are their top 10
@@ -547,21 +598,21 @@ def main(taxprofdict,taxdump,pathfinderoutfile,dptresh,output):
     for i in subfolders:
         if "kraken2" in i:
             logging.info('%s\tDetected Kraken2 run, Parsing ', time.ctime())
-            (Samples,Outputfolders)=ParseKraken2(taxprofdict, taxdump,dptresh, output, Samples, Outputfolders)
+            #(Samples,Outputfolders)=ParseKraken2(taxprofdict, taxdump,dptresh, output, Samples, Outputfolders)
         if "bracken" in i:
             logging.info('%s\tDetected Bracken run, Parsing ', time.ctime())
-            (Samples,Outputfolders)=ParseBracken(taxprofdict, taxdump, dptresh, output, Samples, Outputfolders)
+            #(Samples,Outputfolders)=ParseBracken(taxprofdict, taxdump, dptresh, output, Samples, Outputfolders)
         if "kaiju" in i:
             logging.info('%s\tDetected kaiju run, Parsing ', time.ctime())
-            (Samples,Outputfolders)=ParseKaiju(taxprofdict, taxdump, dptresh, output, Samples, Outputfolders)
+            #(Samples,Outputfolders)=ParseKaiju(taxprofdict, taxdump, dptresh, output, Samples, Outputfolders)
         if "diamond" in i:
             logging.info('%s\tDetected diamond run, Parsing ', time.ctime())
-            (Samples,Outputfolders)=ParseDiamond(taxprofdict, taxdump, dptresh, output, Samples, Outputfolders)
-        if "metaphlan3" in i:
-            logging.info('%s\tDetected Metaphlan3 run, Parsing ', time.ctime())
-            (Samples,Outputfolders)=ParseMetaphlan3(taxprofdict, taxdump, dptresh, output, Samples, Outputfolders)
+            #(Samples,Outputfolders)=ParseDiamond(taxprofdict, taxdump, dptresh, output, Samples, Outputfolders)
+        if "metaphlan" in i:
+            logging.info('%s\tDetected Metaphlan4 run, Parsing ', time.ctime())
+            (Samples,Outputfolders)=ParseMetaphlan4(taxprofdict, taxdump, dptresh, output, Samples, Outputfolders)
 
-            
+        
     logging.info('%s\t--Plotting within Tools--', time.ctime())
     plotting_withinEachTool(output,Outputfolders)
     logging.info('%s\tParsing Finished', time.ctime())
