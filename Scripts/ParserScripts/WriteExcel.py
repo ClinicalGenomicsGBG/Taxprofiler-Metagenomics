@@ -46,14 +46,8 @@ def SummarizeInExcel(toolfolders):
         for c in countstoplot:
             samplename=c.split("/")[-1]
             Countfiles[t].append(samplename)
-
-
-
         
-    uniqueCountFiles=list(set(sum(list(Countfiles.values()),[]))) # Get the unique counts for plotting name to be able to loop through them! 
-
-
-
+    uniqueCountFiles=list(set(sum(list(Countfiles.values()),[]))) # Get the unique counts for plotting name to be able to loop through them!
 
     for c in uniqueCountFiles:
         #df=pd.DataFrame() # For every sample generate a dataframe 
@@ -72,7 +66,6 @@ def SummarizeInExcel(toolfolders):
                         next(inf) # Skip headerline
                         for l in inf:
                             l=l.strip()
-                            print(l)
                             taxnr=l.split("\t")[0]
                             taxname=l.split("\t")[1]
                             counts=int(l.split("\t")[2])

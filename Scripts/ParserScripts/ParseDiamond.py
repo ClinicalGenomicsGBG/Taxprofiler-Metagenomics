@@ -34,7 +34,7 @@ def ParseDiamond(taxprofdict, taxdump,dptresh):
     tool="diamond"
 
     Fastqfiles=[]
-
+    
     
     for i in subfolders:
         if "bowtie2" in i: # The unmapped fastq should be in the bowtie2 dir 
@@ -124,9 +124,14 @@ def ParseDiamond(taxprofdict, taxdump,dptresh):
                                     for key, values in detectedReads.items(): # Loop through detected reads, for each species for that sample we are extracting from the fastq file
                                         outfq="Diamond/Classified_Reads/"+key+"/"+key+"_"+fname+".fastq" # Out fastq filename
                                         with open(outfq, "w") as o:
-                                            for i in values:
-                                                rec=Records[i].format("fastq").strip()
-                                                print(rec, file=o)
+                                            for v in values:
+
+                                                try: # We need to handle if the PE info is within the read name, then it is just a try as the exact hit might be in R2 instead of R1. 
+                                                    rec=Records[v].format("fastq").strip()
+                                                    
+                                                    print(rec, file=o)
+                                                except KeyError:
+                                                    continue
                         else:
                             print("Warning, no fastqfiles Available. No read extraction")
 

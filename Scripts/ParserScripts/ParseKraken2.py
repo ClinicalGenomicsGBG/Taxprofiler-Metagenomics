@@ -54,7 +54,7 @@ def ParseKraken2(taxprofdict, taxdump, dptresh):
                         # Taxpasta
                         krakdb=k.split("/")[-1]
                         outTaxpasta= "Kraken2/" + "kraken2_" + krakdb+".tsv"
-                        command="/home/xabras/.conda/envs/TaxPasta/bin/taxpasta merge -p kraken2 -o %s --add-name --add-rank --add-lineage --taxonomy %s %s/*.kraken2.report.txt" %(outTaxpasta, taxdump, k)
+                        command="/home/xabras/.conda/envs/TaxPasta/bin/taxpasta merge -p kraken2 -o %s --summarise-at species --add-name --add-rank --add-lineage --taxonomy %s %s/*.kraken2.report.txt" %(outTaxpasta, taxdump, k)
                         subprocess.call(command, shell=True)
                         Sampleorder=[]
                         with open(outTaxpasta, "r") as taxpasta:
@@ -126,9 +126,13 @@ def ParseKraken2(taxprofdict, taxdump, dptresh):
                                         for key, values in detectedReads.items(): # Loop through detected reads, for each species for that sample we are extracting from the fastq file
                                             outfq="Kraken2/Classified_Reads/"+key+"/"+key+"_"+fname+".fastq" # Out fastq filename
                                             with open(outfq, "w") as o: 
-                                                for i in values:
-                                                    rec=Records[i].format("fastq").strip()                                                        
-                                                    print(rec, file=o)                                            
+                                                for v in values:
+                                                    try: # To allow for PE info in reads
+                                                        rec=Records[v].format("fastq").strip()                                              
+                                                        print(rec, file=o)
+                                                    except KeyError:
+                                                        continue
+                                                    
                                     #else: 
                                      #   print("We cannot have pe in the readname, need to think about this!  ")
                                      #   continue                                                
@@ -138,10 +142,9 @@ def ParseKraken2(taxprofdict, taxdump, dptresh):
 
 
     
-                                    
 def main(taxprofdict, taxdump, dptresh):
-    
     ParseKraken2(taxprofdict, taxdump, dptresh)
+    
     
 if __name__ == '__main__':
     args=parseArgs(sys.argv[1:])
