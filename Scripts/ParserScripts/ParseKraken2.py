@@ -10,6 +10,7 @@ import os
 import pandas as pd
 from plotnine import ggplot, aes, geom_bar, theme, element_text, xlab, ggtitle
 import psutil
+import re
 import subprocess
 import sys
 import time
@@ -27,11 +28,16 @@ def parseArgs(argv):
     arguments = parser.parse_args(argv)
     return arguments
 
+
+
+
 def ParseKraken2(taxprofdict, taxdump, dptresh):
     """
     
     """
 
+    print("Parsing Kraken2...")
+    
     subfolders = [ f.path for f in os.scandir(taxprofdict) if f.is_dir() ]
     tool="kraken2"
     Fastqfiles=[]
@@ -46,102 +52,103 @@ def ParseKraken2(taxprofdict, taxdump, dptresh):
         if tool in i: # We can extract reads using krak
             subfolders_2=[ f.path for f in os.scandir(i) if f.is_dir() ] # Check subfolders in kraken2 dir
             for k in subfolders_2:
-                    if "krak_" in k:
-                        try:
-                            os.mkdir("Kraken2")
-                        except FileExistsError:
-                            logging.info('%s\tFolder already exists', time.ctime())
-                        # Taxpasta
-                        krakdb=k.split("/")[-1]
-                        outTaxpasta= "Kraken2/" + "kraken2_" + krakdb+".tsv"
-                        command="/home/xabras/.conda/envs/TaxPasta/bin/taxpasta merge -p kraken2 -o %s --summarise-at species --add-name --add-rank --add-lineage --taxonomy %s %s/*.kraken2.report.txt" %(outTaxpasta, taxdump, k)
-                        subprocess.call(command, shell=True)
-                        Sampleorder=[]
-                        with open(outTaxpasta, "r") as taxpasta:
-                            header = taxpasta.readline().split("\t")
-                            for i in header[4:]:
-                                samplename=i.split(krakdb+".kraken2.kraken2.report")[0]
-                                Sampleorder.append([i,samplename,header.index(i)])
-                                
-                        for i in Sampleorder: # loop through the Taxpasta file ones per sample, save to file!
-                            samplename=i[1]
-                            samplename="_".join(samplename.rsplit("_pe_", 1)) # Remove the PE that kraken2 adds to the name
-
-                            sampleindex=i[2]
-                            outforplot="Kraken2/"+samplename+"CountsForplotting.txt"
-
-                            with open(outTaxpasta,"r") as taxpasta, open(outforplot, "w") as o:
-                                print("Taxonomy_nr\tTaxonomy_name\tCounts", file=o)
-                                next(taxpasta)
-                                next(taxpasta)
-                                for l in taxpasta:
-                                    l=l.strip()
-                                    TAXID=int(l.split("\t")[0])
-                                    Counts=int(l.split("\t")[sampleindex])
-                                    rank=l.split("\t")[2]
-                                    if rank == "species":
-                                        if Counts >= dptresh:
-                                            speciesid=l.split("\t")[0]
-                                            speciesname=l.split("\t")[1]
-                                            print(str(speciesid)+"\t"+str(speciesname)+"\t"+str(Counts), file=o)
-                                            if not speciesid in Annotation:
-                                                Annotation[int(speciesid)]=speciesname
+                if "krak_" in k:
+                    krakdb=k.split("/")[-1]
+                    try:
+                        os.mkdir("Kraken2")
+                    except FileExistsError:
+                        logging.info('%s\tFolder already exists', time.ctime())
 
 
-                        # Extract the reads, outputed from the bowtie directoty
+
+                    reports=glob.glob(k+"/*.report.txt")
+
+                    for r in reports: # Looping through the reports! 
+                        speciesStrainAnno={} # To keep the species annotation and info if there is a strain annotation, we use this when we extract the detected reads from classified report
+                        print(r)
+                        samplename=r.split(krakdb+".kraken2.kraken2.report")[0].split("/")[-1]
+                        if "_pe_" in samplename:
+                            samplename_base="_".join(samplename.rsplit("_pe_", 1)).rstrip("_") # Remove the PE that kraken2 adds to the name, if PE reads
+                        if "_se_" in samplename:
+                            samplename_base="_".join(samplename.rsplit("_se_", 1)).rstrip("_") # Remove the SE that kraken2 adds to the name, if SE reads
+                        outforplot="Kraken2/"+samplename_base+"_CountsForplotting.txt"
+                        print(outforplot)
+                        with open(r, "r") as report, open(outforplot, "w") as o:
+                            for l in report:
+                                l=l.strip()
+                                taxnr=l.split("\t")[4]
+                                counts=int(l.split("\t")[1])
+                                taxlevel=l.split("\t")[3]
+                                taxname=l.split("\t")[5].lstrip()
+                                if taxlevel=="S":
+                                    speciesTresh=counts
+                                    if counts >= dptresh: # If our taxlevel is species
+                                        print(str(taxnr)+"\t"+taxname+"\t"+str(counts), file=o)
+                                        speciesStrainAnno[taxname]=[taxnr]
+                                        speciesLinkedTostrain=taxname # We save this as we can link the strains to this species
+                                elif re.findall(r'(S(\w)+)',taxlevel): # If there is something after S, these are after the species string
+                                    if speciesTresh >= dptresh: # We need to make sure that the species treshold is more than or equal to the depthtreshold, if the species is ok we append the strains if they are there!
+                                        speciesStrainAnno[speciesLinkedTostrain].append(taxnr)
+                                    
+                                    
+                         # Extract the reads, outputed from the bowtie directoty
                         if Fastqfiles:
+                            detectedReads={}
+                            print("Create the species subfolders for all detected reads and extracts the reads from kraken2 classified reads report")
                             classifiedreads=glob.glob(k+"/*.classifiedreads.txt")
+
                             for c in classifiedreads:
-                                detectedReads={}
-                                samplename=c.split(krakdb+".kraken2.kraken2.classifiedreads.txt")[0].split("/")[-1].strip("_")
-                                samplename="_".join(samplename.rsplit("_pe_", 1)) # Remove the PE that kraken2 adds to the name
+                                if samplename in c:
+                                    with open(c, "r") as classifiedreadreport:
+                                        for l in classifiedreadreport:
+                                            l=l.strip()
+                                            if l.split("\t")[0] == "C": # If classified extract read id
+                                                readname=l.split("\t")[1]
+                                                taxid=int(l.split("\t")[2])
+                                                for key, values in speciesStrainAnno.items():
+                                                    if str(taxid) in values: # The species identifier is always value[0], strain identifier will be the additional items in the value list
 
-                                with open(c, "r") as inf: # get the readname from the classified reads in kraken2
-                                    for l in inf:
-                                        if l.split("\t")[0] == "C": # If classified extract read id
-                                            readname=l.split("\t")[1]
-                                            taxid=int(l.split("\t")[2])
-                                            if taxid in Annotation: # It wont be in the annotation if the read is at a level we are not targeting, say we go for species we wont get Genus  
-                                                Anno=Annotation[taxid]
-                                                key=Anno.replace(" ","").replace("(","").replace(")","").replace("/","")+"_"+str(taxid) # Remove space, remove parantesis, remove / from the species names
-                                                if key in detectedReads:
-                                                    detectedReads[key].append(readname)
-                                                else:
-                                                    detectedReads[key]=[readname]
-                                                    outfoldersspecies="Kraken2/Classified_Reads/"+key
-                                                    try:
-                                                        os.makedirs(outfoldersspecies) # Create one output folder per species 
-                                                    except FileExistsError: # As we are looping throught the classified reads files there is one per sample, i only want to create one folder per species in the kraken2 folder. If we have one species in more than one sample we need to capture the error. 
-                                                        continue
+                                                        speciesIdentifierkey=key.replace(" ","").replace("(","").replace(")","").replace("/","")+"_"+str(values[0]) # Remove space, remove parantesis, remove / from the species names
+                                                        outfoldersspecies="Kraken2/Classified_Reads/"+speciesIdentifierkey
 
+                                                        if not speciesIdentifierkey in detectedReads:
+                                                            detectedReads[speciesIdentifierkey]=[readname]
+                                                        else:
+                                                            detectedReads[speciesIdentifierkey].append(readname)
+                                                            
+                                                        try:
+                                                            os.makedirs(outfoldersspecies)
+                                                        except FileExistsError:
+                                                            continue                                                        
+                            for f in Fastqfiles:
+                                if samplename_base in f:
+                                    if f.endswith(".gz"): # If the files are gziped you need to use gzip open, save record to dict and get a basename from the fastq
+                                        Records=SeqIO.to_dict(SeqIO.parse(gzip.open(f, "rt"),'fastq'))
+                                        fname=f.split("/")[-1].replace(".unmapped","").split(".fastq.gz")[0]
+                                    else:
+                                        Records=SeqIO.to_dict(SeqIO.parse(f,'fastq'))
+                                        fname=f.split("/")[-1].replace(".unmapped","").split(".fastq")[0]
 
-                                for f in Fastqfiles: # for all classifiers the samples get the _pe_ addition. check if we have this in the sample name, in that case give a warning, if not just replace pe in the name.
-                                    if samplename in f:
-                                        if f.endswith(".gz"): # If the files are gziped you need to use gzip open, save record to dict and get a basename from the fastq
-                                            Records=SeqIO.to_dict(SeqIO.parse(gzip.open(f, "rt"),'fastq'))
-                                            fname=f.split("/")[-1].replace(".unmapped","").split(".fastq.gz")[0]
-                                        else:
-                                            Records=SeqIO.to_dict(SeqIO.parse(f,'fastq'))
-                                            fname=f.split("/")[-1].replace(".unmapped","").split(".fastq")[0]
-                                        for key, values in detectedReads.items(): # Loop through detected reads, for each species for that sample we are extracting from the fastq file
-                                            outfq="Kraken2/Classified_Reads/"+key+"/"+key+"_"+fname+".fastq" # Out fastq filename
-                                            with open(outfq, "w") as o: 
-                                                for v in values:
-                                                    try: # To allow for PE info in reads
-                                                        rec=Records[v].format("fastq").strip()                                              
-                                                        print(rec, file=o)
-                                                    except KeyError:
-                                                        continue
-                                                    
-                                    #else: 
-                                     #   print("We cannot have pe in the readname, need to think about this!  ")
-                                     #   continue                                                
-                                        
+                                    for key, values in detectedReads.items(): # Loop through detected reads, for each species for that sample we are extracting from the fastq file
+                                        outfq="Kraken2/Classified_Reads/"+key+"/"+key+"_"+fname+".fastq" # Out fastq filename
+                                        print(outfq)
+                                        with open(outfq, "w") as o:
+                                            Counter=0
+                                            for v in values:
+                                                try: # To allow for PE info within the read header
+                                                    rec=Records[v].format("fastq").strip()
+                                                    print(rec, file=o)
+                                                    Counter+=1
+                                                except KeyError:
+                                                    continue
+
+                                            if not len(values)==Counter: # Check so the amount of extracted reads is the same in fastq as the countfile
+                                                print("Warning only %s reads extracted, should be %s" %(Counter,len(values)) )
                         else:
-                            print("Warning, no fastqfiles Available. No read extraction")            
+                            print("Warning no fastqfiles Available, no Read extraction")
 
-
-    
+                                                        
+                            
 def main(taxprofdict, taxdump, dptresh):
     ParseKraken2(taxprofdict, taxdump, dptresh)
     
