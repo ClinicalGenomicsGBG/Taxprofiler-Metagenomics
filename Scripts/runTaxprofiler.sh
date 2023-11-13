@@ -38,10 +38,6 @@ nextflow run nf-core/taxprofiler --perform_shortread_qc --shortread_qc_tool 'fas
 
 "
 
-#nextflow run nf-core/taxprofiler --perform_shortread_qc --shortread_qc_tool 'fastp' --perform_shortread_hostremoval --shortread_hostremoval_index $hostindex --hostremoval_reference $hostfasta --save_preprocessed_reads --perform_shortread_complexityfilter --shortread_complexityfilter_tool 'bbduk' -profile singularity --input $SampleSheet --databases $DatabaseSheet --outdir $outDir -r 1.1.0 -c $MandaloreConfig --run_krakenuniq --run_kraken2 --kraken2_save_readclassifications --run_diamond --run_bracken --run_krona --run_metaphlan --save_hostremoval_unmapped --run_profile_standardisation --taxpasta_taxonomy_dir $taxdumpdir --taxpasta_add_name --taxpasta_add_rank --taxpasta_add_lineage -resume
-
-
-
-nextflow run nf-core/taxprofiler --perform_shortread_qc --shortread_qc_tool 'fastp' --perform_shortread_hostremoval --shortread_hostremoval_index $hostindex --hostremoval_reference $hostfasta --save_preprocessed_reads --perform_shortread_complexityfilter --shortread_complexityfilter_tool 'bbduk' -profile singularity --input $SampleSheet --databases $DatabaseSheet --outdir $outDir -r 1.1.0 -c $MandaloreConfig --run_krakenuniq --krakenuniq_save_readclassifications --run_kraken2 --kraken2_save_readclassifications --run_diamond --run_bracken --run_krona --run_metaphlan --save_hostremoval_unmapped -resume
+nextflow run nf-core/taxprofiler --perform_shortread_qc --shortread_qc_tool 'fastp' --perform_shortread_hostremoval --shortread_hostremoval_index $hostindex --hostremoval_reference $hostfasta --save_preprocessed_reads --perform_shortread_complexityfilter --shortread_complexityfilter_tool 'bbduk' -profile singularity --input $SampleSheet --databases $DatabaseSheet --outdir $outDir -r 1.1.2 -c $MandaloreConfig --run_kraken2 --kraken2_save_readclassifications --kraken2_save_reads --run_krakenuniq --krakenuniq_save_reads --krakenuniq_save_readclassifications --run_krona --save_hostremoval_unmapped 
 
 echo "Fin"
