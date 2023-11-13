@@ -1,5 +1,5 @@
 tool,db_name,db_params,db_path
-kraken2,krak_230419,--quick,/medstore/databases/taxprofiler/databases/kraken2/kraken2_230419/AVB
+kraken2,Kraken2_PlusPF_091023,--quick,/medstore/databases/taxprofiler/databases/kraken2/Kraken2_PlusPF_091023
 bracken,bracken_150,;-r 150,/medstore/databases/taxprofiler/databases/kraken2/kraken2_230419/AVB
 kaiju,Kaiju_140623,,/medstore/databases/taxprofiler/databases/Kaiju_140623/
 diamond,Diamond_230321,,/medstore/databases/taxprofiler/databases/diamond/
