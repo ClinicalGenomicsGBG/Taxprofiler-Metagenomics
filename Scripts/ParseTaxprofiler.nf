@@ -172,6 +172,9 @@ workflow {
 	DepthTresh_p=Channel.from(params.DepthTresh)
 	params.OutputDir=''
 
+
+	// -- Parameters from config 
+
 	//--- Workflow --- 
 	//ParseMetaPhlan4(Taxprofiler_out_p, DepthTresh_p)
 	ParseKraken2(Taxprofiler_out_p, DepthTresh_p)

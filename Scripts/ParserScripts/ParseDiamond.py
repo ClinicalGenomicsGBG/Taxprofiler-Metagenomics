@@ -25,7 +25,7 @@ def parseArgs(argv):
     '''
     parser = argparse.ArgumentParser(description='Takes the output from taxprofiler and parses it')
     parser.add_argument("--Taxprofiler_out", dest = 'taxprofdict', required=True, help ="Output folder from taxprofiler (required)")
-    parser.add_argument("--taxdumpfile", dest = 'taxdump', help ="Path to taxdump (required)", default="/medstore/databases/taxprofiler/databases/taxpasta_taxonomy/taxdump.tar.gz")
+    parser.add_argument("--taxdumpfile", dest = 'taxdump', help ="Path to taxdump (required)", required=True)
     parser.add_argument("--DepthTresh", dest = 'dptresh',default=10,type=int,help ="Minimum depth required to be reported")
     arguments = parser.parse_args(argv)
     return arguments
