@@ -80,11 +80,6 @@ def ParseKraken2(taxprofdict, dptresh):
                                 elif re.findall(r'(S(\w)+)',taxlevel): # If there is something after S, these are after the  strain string
                                     if speciesTresh >= dptresh: # We need to make sure that the species treshold is more than or equal to the depthtreshold, if the species is ok we append the strains if they are there!
                                         speciesStrainAnno[speciesLinkedTostrain].append(taxnr)
-                                        
-
-
-
-
 
                         if "_pe_" in r: # We have the PE flag added by taxprofiler, this was run in Paired END mode!
                             R1=k+"/"+samplename+".kraken2.classified_1.fastq.gz"
@@ -111,7 +106,7 @@ def ParseKraken2(taxprofdict, dptresh):
                                         try: # Generate the species folder if it is not there!
                                             os.makedirs(outfoldersspecies)
                                         except FileExistsError:
-                                            x="Folder already exists, continue"
+                                            pass
                                         sname=samplename.split(k)[0] # Remove the database part from the sample name!
 
                                         # R1 or R2?
