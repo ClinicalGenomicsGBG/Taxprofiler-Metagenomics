@@ -22,12 +22,12 @@ source activate TaxProfiler
 
 ```
 
-Downlaod the newer version (tested on 1.1.0)
+Downlaod the newer version (tested on 1.1.2)
 
 
 ```
 
-nf-core download taxprofiler -r 1.1.0
+nf-core download taxprofiler -r 1.1.2
 
 or 
 
@@ -52,14 +52,11 @@ Sample1,Run1,ILLUMINA,/path/to/Sample1.R1.fastq.gz,/path/to/Sample1.R2.fastq.gz,
 2. (*Optional*) Database is already set but if you want to change it generate your $DatabaseSheet, comma seperated containing the paths to the databases you want to include.
 
 ```
-
 tool,db_name,db_params,db_path
-kraken2,krak_230419,--quick,/medstore/databases/taxprofiler/databases/kraken2/kraken2_230419/AVB
-bracken,bracken_150,;-r 150,/medstore/databases/taxprofiler/databases/kraken2/kraken2_230419/AVB
-kaiju,Kaiju_140623,,/medstore/databases/taxprofiler/databases/Kaiju_140623/
+kraken2,Kraken2_PlusPF_091023,--quick,/medstore/databases/taxprofiler/databases/kraken2/Kraken2_PlusPF_091023
 diamond,Diamond_230321,,/medstore/databases/taxprofiler/databases/diamond/
 krakenuniq,krakenuniq_MicrobialDB,,/medstore/databases/taxprofiler/databases/KrakenUniq_MicrobialDB
-metaphlan3,Metaphlan3_manualDownload,,/medstore/databases/taxprofiler/databases/Metaphlan3_manualDownload
+metaphlan,Metaphlan4,,/medstore/databases/taxprofiler/databases/Metaphlan4
 
 ```
 
@@ -74,10 +71,11 @@ qsub /medstore/Development/Metagenomics/TaxProfiler/runTaxprofiler.sh <SampleShe
 
 ```
 
-4. When Taxprofiler is done and you want to extract the reads and generate count tables.
+4. When Taxprofiler is done and you want to extract the reads and generate count tables. *Important* Need to include the entire path to the Taxprofiler output directory! 
 
 ```
 
 qsub runParser_nextflow.sh <Full/Path/To/TaxprofilerOutPutDir> <ParserOutputDir>
 
 ```
+
