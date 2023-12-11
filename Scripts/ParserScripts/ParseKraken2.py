@@ -38,6 +38,8 @@ def ParseKraken2(taxprofdict, dptresh):
     """
 
     print("Parsing Kraken2...")
+
+
     
     subfolders = [ f.path for f in os.scandir(taxprofdict) if f.is_dir() ]
     tool="kraken2"

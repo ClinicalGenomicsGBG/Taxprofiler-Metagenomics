@@ -17,6 +17,7 @@ def helpMessage(){
     	     --Taxprofiler_out	Output directory of Taxprofiler
 	     --DepthTresh	Depth Treshold to count it as detected
 	     --OutputDir	OutPut folder to store the results in 
+	     --TaxDump_gz	Path to taxdump om gzip (required for Diamond)
 	     -c			configuration file for nextflow (Works for Mandalores nodes)
     Optional arguments:
     	     --help   This usage statement
@@ -106,6 +107,8 @@ process ParseDiamond {
 	input:
 		val Taxprofiler_out_p
 		val DepthTresh_p
+		val TaxDump_gz_p
+	
 		
 	output:
 		path 'Diamond', emit: Diamond_outs
@@ -113,7 +116,7 @@ process ParseDiamond {
 	script:
 	"""
 
-	/apps/bio/software/anaconda2/envs/TaxProfiler/bin/python /medstore/Development/Metagenomics/TaxProfiler/TestSamples_FromMicro/TaxprofilerRun/Scripts/Taxprofiler-Metagenomics/Scripts/ParserScripts/ParseDiamond.py --Taxprofiler_out ${Taxprofiler_out_p} --DepthTresh ${DepthTresh_p} 
+	/apps/bio/software/anaconda2/envs/TaxProfiler/bin/python /medstore/Development/Metagenomics/TaxProfiler/TestSamples_FromMicro/TaxprofilerRun/Scripts/Taxprofiler-Metagenomics/Scripts/ParserScripts/ParseDiamond.py --Taxprofiler_out ${Taxprofiler_out_p} --DepthTresh ${DepthTresh_p} --taxdumpfile ${TaxDump_gz_p}
 
 	"""		
 
@@ -171,16 +174,16 @@ workflow {
 	params.DepthTresh=''
 	DepthTresh_p=Channel.from(params.DepthTresh)
 	params.OutputDir=''
+	params.TaxDump_gz=''
+	TaxDump_gz_p=Channel.from(params.TaxDump_gz)
 
-
-	// -- Parameters from config 
 
 	//--- Workflow --- 
 	//ParseMetaPhlan4(Taxprofiler_out_p, DepthTresh_p)
 	ParseKraken2(Taxprofiler_out_p, DepthTresh_p)
 	// Turning of krakenuniq for now, it is to memory heavy 
 	ParseKrakenUniq(Taxprofiler_out_p, DepthTresh_p) 
-	ParseDiamond(Taxprofiler_out_p, DepthTresh_p)
+	ParseDiamond(Taxprofiler_out_p, DepthTresh_p, TaxDump_gz_p)
 	// Ganon is just for tester here as well, we might need to remove it also! 
 	//ParseGanon(Taxprofiler_out_p, DepthTresh_p)
 	//ParseExcel(ParseDiamond.out.Diamond_outs, ParseKraken2.out.Kraken2_outs)
