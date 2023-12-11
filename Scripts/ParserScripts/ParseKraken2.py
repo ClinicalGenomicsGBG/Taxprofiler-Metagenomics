@@ -1,7 +1,10 @@
 #!/usr/bin/py
 
 import argparse
+
+from Bio.SeqIO.QualityIO import FastqGeneralIterator
 from Bio import SeqIO
+
 from collections import Counter
 import glob
 import gzip
@@ -10,6 +13,7 @@ import os
 import pandas as pd
 from plotnine import ggplot, aes, geom_bar, theme, element_text, xlab, ggtitle
 import psutil
+import re
 import subprocess
 import sys
 import time
@@ -22,131 +26,146 @@ def parseArgs(argv):
     '''
     parser = argparse.ArgumentParser(description='Takes the output from taxprofiler and parses it')
     parser.add_argument("--Taxprofiler_out", dest = 'taxprofdict', required=True, help ="Output folder from taxprofiler (required)")
-    parser.add_argument("--taxdumpfile", dest = 'taxdump', required=True, help ="Path to taxdump (required)")
     parser.add_argument("--DepthTresh", dest = 'dptresh',default=10, type=int, help ="Minimum depth required to be reported")
     arguments = parser.parse_args(argv)
     return arguments
 
-def ParseKraken2(taxprofdict, taxdump, dptresh):
+
+
+def ParseKraken2(taxprofdict, dptresh):
     """
     
     """
 
+    print("Parsing Kraken2...")
+
+
+    
     subfolders = [ f.path for f in os.scandir(taxprofdict) if f.is_dir() ]
     tool="kraken2"
     Fastqfiles=[]
     Annotation={}
     
     for i in subfolders:
-        if "bowtie2" in i:
-            subfolders_2=[ f.path for f in os.scandir(i) if f.is_dir() ]
-            for k in subfolders_2:
-                if "align" in k:
-                    Fastqfiles=glob.glob(k+"/*.fastq.gz") # We have FastqFiles then we can extract
         if tool in i: # We can extract reads using krak
             subfolders_2=[ f.path for f in os.scandir(i) if f.is_dir() ] # Check subfolders in kraken2 dir
             for k in subfolders_2:
-                    if "krak_" in k:
-                        try:
-                            os.mkdir("Kraken2")
-                        except FileExistsError:
-                            logging.info('%s\tFolder already exists', time.ctime())
-                        # Taxpasta
-                        krakdb=k.split("/")[-1]
-                        outTaxpasta= "Kraken2/" + "kraken2_" + krakdb+".tsv"
-                        command="/home/xabras/.conda/envs/TaxPasta/bin/taxpasta merge -p kraken2 -o %s --summarise-at species --add-name --add-rank --add-lineage --taxonomy %s %s/*.kraken2.report.txt" %(outTaxpasta, taxdump, k)
-                        subprocess.call(command, shell=True)
-                        Sampleorder=[]
-                        with open(outTaxpasta, "r") as taxpasta:
-                            header = taxpasta.readline().split("\t")
-                            for i in header[4:]:
-                                samplename=i.split(krakdb+".kraken2.kraken2.report")[0]
-                                Sampleorder.append([i,samplename,header.index(i)])
-                                
-                        for i in Sampleorder: # loop through the Taxpasta file ones per sample, save to file!
-                            samplename=i[1]
-                            samplename="_".join(samplename.rsplit("_pe_", 1)) # Remove the PE that kraken2 adds to the name
-
-                            sampleindex=i[2]
-                            outforplot="Kraken2/"+samplename+"CountsForplotting.txt"
-
-                            with open(outTaxpasta,"r") as taxpasta, open(outforplot, "w") as o:
-                                print("Taxonomy_nr\tTaxonomy_name\tCounts", file=o)
-                                next(taxpasta)
-                                next(taxpasta)
-                                for l in taxpasta:
-                                    l=l.strip()
-                                    TAXID=int(l.split("\t")[0])
-                                    Counts=int(l.split("\t")[sampleindex])
-                                    rank=l.split("\t")[2]
-                                    if rank == "species":
-                                        if Counts >= dptresh:
-                                            speciesid=l.split("\t")[0]
-                                            speciesname=l.split("\t")[1]
-                                            print(str(speciesid)+"\t"+str(speciesname)+"\t"+str(Counts), file=o)
-                                            if not speciesid in Annotation:
-                                                Annotation[int(speciesid)]=speciesname
-
-
-                        # Extract the reads, outputed from the bowtie directoty
-                        if Fastqfiles:
-                            classifiedreads=glob.glob(k+"/*.classifiedreads.txt")
-                            for c in classifiedreads:
-                                detectedReads={}
-                                samplename=c.split(krakdb+".kraken2.kraken2.classifiedreads.txt")[0].split("/")[-1].strip("_")
-                                samplename="_".join(samplename.rsplit("_pe_", 1)) # Remove the PE that kraken2 adds to the name
-
-                                with open(c, "r") as inf: # get the readname from the classified reads in kraken2
-                                    for l in inf:
-                                        if l.split("\t")[0] == "C": # If classified extract read id
-                                            readname=l.split("\t")[1]
-                                            taxid=int(l.split("\t")[2])
-                                            if taxid in Annotation: # It wont be in the annotation if the read is at a level we are not targeting, say we go for species we wont get Genus  
-                                                Anno=Annotation[taxid]
-                                                key=Anno.replace(" ","").replace("(","").replace(")","").replace("/","")+"_"+str(taxid) # Remove space, remove parantesis, remove / from the species names
-                                                if key in detectedReads:
-                                                    detectedReads[key].append(readname)
-                                                else:
-                                                    detectedReads[key]=[readname]
-                                                    outfoldersspecies="Kraken2/Classified_Reads/"+key
-                                                    try:
-                                                        os.makedirs(outfoldersspecies) # Create one output folder per species 
-                                                    except FileExistsError: # As we are looping throught the classified reads files there is one per sample, i only want to create one folder per species in the kraken2 folder. If we have one species in more than one sample we need to capture the error. 
-                                                        continue
-
-
-                                for f in Fastqfiles: # for all classifiers the samples get the _pe_ addition. check if we have this in the sample name, in that case give a warning, if not just replace pe in the name.
-                                    if samplename in f:
-                                        if f.endswith(".gz"): # If the files are gziped you need to use gzip open, save record to dict and get a basename from the fastq
-                                            Records=SeqIO.to_dict(SeqIO.parse(gzip.open(f, "rt"),'fastq'))
-                                            fname=f.split("/")[-1].replace(".unmapped","").split(".fastq.gz")[0]
-                                        else:
-                                            Records=SeqIO.to_dict(SeqIO.parse(f,'fastq'))
-                                            fname=f.split("/")[-1].replace(".unmapped","").split(".fastq")[0]
-                                        for key, values in detectedReads.items(): # Loop through detected reads, for each species for that sample we are extracting from the fastq file
-                                            outfq="Kraken2/Classified_Reads/"+key+"/"+key+"_"+fname+".fastq" # Out fastq filename
-                                            with open(outfq, "w") as o: 
-                                                for v in values:
-                                                    try: # To allow for PE info in reads
-                                                        rec=Records[v].format("fastq").strip()                                              
-                                                        print(rec, file=o)
-                                                    except KeyError:
-                                                        continue
-                                                    
-                                    #else: 
-                                     #   print("We cannot have pe in the readname, need to think about this!  ")
-                                     #   continue                                                
+                if "Kraken2_" in k:
+                    krakdb=k.split("/")[-1]
+                    try:
+                        os.mkdir("Kraken2")
+                    except FileExistsError:
+                        logging.info('%s\tFolder already exists', time.ctime())
+                    reports=glob.glob(k+"/*.report.txt")
+                    for r in reports: # Looping through the reports! 
+                        speciesStrainAnno={} # To keep the species annotation and info if there is a strain annotation, we use this when we extract the detected reads from classified report
+                        SpeciesCounts={}
+                        samplename=r.split(".kraken2.kraken2.report.txt")[0].split("/")[-1]                    
+                        outforplot="Kraken2/"+samplename+"_CountsForplotting.txt"
+                        
+                        with open(r, "r") as report, open(outforplot, "w") as o:
+                            print("TaxID\tSpecies\tCounts", file=o)
+                            for l in report:
+                                l=l.strip()
+                                taxnr=l.split("\t")[4]
+                                counts=int(l.split("\t")[1])
+                                taxlevel=l.split("\t")[3]
+                                taxname=l.split("\t")[5].lstrip()
+                                if taxlevel=="S":
+                                    speciesTresh=counts
+                                    if counts >= dptresh: # If our taxlevel is species
+                                        print(str(taxnr)+"\t"+taxname+"\t"+str(counts), file=o)
+                                        speciesStrainAnno[taxname]=[taxnr]
+                                        speciesLinkedTostrain=taxname # We save this as we can link the strains to this species
+                                        SpeciesCounts[taxname]=counts
                                         
-                        else:
-                            print("Warning, no fastqfiles Available. No read extraction")            
+                                elif re.findall(r'(S(\w)+)',taxlevel): # If there is something after S, these are after the  strain string
+                                    if speciesTresh >= dptresh: # We need to make sure that the species treshold is more than or equal to the depthtreshold, if the species is ok we append the strains if they are there!
+                                        speciesStrainAnno[speciesLinkedTostrain].append(taxnr)
+
+                        if "_pe_" in r: # We have the PE flag added by taxprofiler, this was run in Paired END mode!
+                            R1=k+"/"+samplename+".kraken2.classified_1.fastq.gz"
+                            R2=k+"/"+samplename+".kraken2.classified_2.fastq.gz"
+                            
+                            fastqs=[R1, R2]
+                            for f in fastqs:
+                                if os.path.exists(f):
+                                    SpeciesWithFastq={}
+                                    with gzip.open(f, "rt") as handle:
+                                        for header, seq, qual in FastqGeneralIterator(handle):
+                                            fastqread="@"+header+"\n"+seq+"\n+\n"+qual
+                                            taxid=header.split("|")[-1]
+                                            for key, values in speciesStrainAnno.items():
+                                                if taxid in values:
+                                                    if not key in SpeciesWithFastq:
+                                                        SpeciesWithFastq[key]=[(fastqread)]
+                                                    else:
+                                                        SpeciesWithFastq[key].append((fastqread))
+
+                                    for key, values in SpeciesWithFastq.items():
+                                        speciesIdentifierkey=key.replace(" ","_").replace("(","").replace(")","").replace("/","") # Remove space, remove parantesis, remove from the species names
+                                        outfoldersspecies="Kraken2/Classified_Reads/"+speciesIdentifierkey
+                                        try: # Generate the species folder if it is not there!
+                                            os.makedirs(outfoldersspecies)
+                                        except FileExistsError:
+                                            pass
+                                        sname=samplename.split(k)[0] # Remove the database part from the sample name!
+
+                                        # R1 or R2?
+                                        if "_1.fastq.gz" in f: 
+                                            OutFastq="Kraken2/Classified_Reads/"+speciesIdentifierkey+"/"+sname +"_" +speciesIdentifierkey+"_1.fastq"
+                                        elif  "_2.fastq.gz" in f:
+                                            OutFastq="Kraken2/Classified_Reads/"+speciesIdentifierkey+"/"+sname +"_" +speciesIdentifierkey+"_2.fastq"
+
+                                        else:
+                                            print("Error: Classified fastq does not contain R1 or R2!")                                            
+                                        with open(OutFastq, "w") as o:
+                                            for read in values: # One read as item in the dictionary
+                                                print(read, file=o)
+                                                # Check that the amount of reported counts is the same as the amount of reported fastq reads!
+                                        if not SpeciesCounts[key] == len(values):
+                                            print("For sample %s, species %s, reads in fastq: %s, reported counts: %s" %(sname,key, len(values), SpeciesCounts[key]))
+
+                                        
+                        elif "_se_" in r: # We have the SE flag added by taxprofiler, this was run in Single END mode!
+                            fastq=k+"/"+samplename+".kraken2.classified.fastq.gz" # We need to have it in gzip format!
+                            if os.path.exists(fastq): # We have the classified reads fastq in kraken2 out, therefore we can extract the reads                            
+                                SpeciesWithFastq={}
+                                with gzip.open(fastq, "rt") as handle:
+                                    for header, seq, qual in FastqGeneralIterator(handle):
+                                        fastqread="@"+header+"\n"+seq+"\n+\n"+qual
+                                        taxid=header.split("|")[-1]
+                                        for key, values in speciesStrainAnno.items():
+                                            if taxid in values:
+                                                if not key in SpeciesWithFastq:
+                                                    SpeciesWithFastq[key]=[(fastqread)]
+                                                else:
+                                                    SpeciesWithFastq[key].append((fastqread))
+                                                    
+                                for key, values in SpeciesWithFastq.items():
+                                    speciesIdentifierkey=key.replace(" ","_").replace("(","").replace(")","").replace("/","") # Remove space, remove parantesis, remove from the species names
+                                    outfoldersspecies="Kraken2/Classified_Reads/"+speciesIdentifierkey
+                                    try: # Generate the species folder if it is not there!
+                                        os.makedirs(outfoldersspecies)
+                                    except FileExistsError:
+                                        x="Folder already exists, continue"
+                                    sname=samplename.split(k)[0] # Remove the database part from the sample name!
+                                    OutFastq="Kraken2/Classified_Reads/"+speciesIdentifierkey+"/"+sname +"_" +speciesIdentifierkey+".fastq"
+                                    with open(OutFastq, "w") as o:
+                                        for read in values: # One read as item in the dictionary
+                                            print(read, file=o)
+                                    # Check that the amount of reported counts is the same as the amount of reported fastq reads!
+                                    if not SpeciesCounts[key] == len(values):            
+                                        print("For sample %s, species %s, reads in fastq: %s, reported counts: %s" %(sname,key, len(values), SpeciesCounts[key]))
 
 
-    
-def main(taxprofdict, taxdump, dptresh):
-    ParseKraken2(taxprofdict, taxdump, dptresh)
+
+                                    
+def main(taxprofdict, dptresh):
+    ParseKraken2(taxprofdict, dptresh)
     
     
 if __name__ == '__main__':
     args=parseArgs(sys.argv[1:])
-    main(args.taxprofdict,args.taxdump, args.dptresh)
+    main(args.taxprofdict, args.dptresh)
 

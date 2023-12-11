@@ -73,3 +73,11 @@ metaphlan3,Metaphlan3_manualDownload,,/medstore/databases/taxprofiler/databases/
 qsub /medstore/Development/Metagenomics/TaxProfiler/runTaxprofiler.sh <SampleSheet> <OutDir>
 
 ```
+
+4. When Taxprofiler is done and you want to extract the reads and generate count tables.
+
+```
+
+qsub runParser_nextflow.sh <Full/Path/To/TaxprofilerOutPutDir> <ParserOutputDir>
+
+```

@@ -3,6 +3,7 @@
 import argparse
 from Bio import SeqIO
 from collections import Counter
+from ete3 import NCBITaxa
 import glob
 import gzip
 import logging
@@ -16,26 +17,109 @@ import time
 import xlsxwriter
 
 
+
+
 def parseArgs(argv):
     '''
     Parsing the arguments
     '''
     parser = argparse.ArgumentParser(description='Takes the output from taxprofiler and parses it')
     parser.add_argument("--Taxprofiler_out", dest = 'taxprofdict', required=True, help ="Output folder from taxprofiler (required)")
-    parser.add_argument("--taxdumpfile", dest = 'taxdump', required=True, help ="Path to taxdump (required)")
+    parser.add_argument("--taxdumpfile", dest = 'taxdump', help ="Path to taxdump (required)", required=True)
     parser.add_argument("--DepthTresh", dest = 'dptresh',default=10,type=int,help ="Minimum depth required to be reported")
     arguments = parser.parse_args(argv)
     return arguments
 
+
 def ParseDiamond(taxprofdict, taxdump,dptresh):
+    ncbi = NCBITaxa(taxdump_file=taxdump)
+    subfolders = [ f.path for f in os.scandir(taxprofdict) if f.is_dir() ]
+    tool="diamond"
+    Fastqfiles=[]
+    for i in subfolders:
+        if "bowtie2" in i: # The unmapped fastq should be in the bowtie2 dir
+            subfolders_2=[ f.path for f in os.scandir(i) if f.is_dir() ]
+            for k in subfolders_2:
+                if "align" in k:
+                    Fastqfiles=glob.glob(k+"/*.fastq.gz") # We have FastqFiles then we can extract
+        if tool in i: # We can extract reads using diamond
+            subfolders_2=[ f.path for f in os.scandir(i) if f.is_dir() ] # Check subfolders in diamond dir
+            for k in subfolders_2:
+                if "Diamond_" in k:
+                    try:
+                         os.mkdir("Diamond")
+                    except FileExistsError:
+                        logging.info('%s\tFolder already exists', time.ctime())
+                    diamondtsv=glob.glob(k+"/*tsv")
+                    for d in diamondtsv: 
+                        outcountsforplotting="Diamond/"+d.split("/")[-1].split("_Diamond_230321.diamond.tsv")[0]+"_CountsForplotting.txt"
+                        with open(d, "r") as diamondtsv, open(outcountsforplotting, "w") as o: 
+                            print("TaxID\tSpecies\tCounts", file=o)
+                            SpeciesDic={}
+                            for l in diamondtsv: 
+                                l=l.strip()
+                                readname=l.split("\t")[0]
+                                taxid=float(l.split("\t")[1])
+                                evalue=float(l.split("\t")[2])
+                                if not taxid==0 and not evalue==0: 
+                                    lineage = ncbi.get_lineage(taxid)
+                                    names = ncbi.get_taxid_translator(lineage)
+                                    lineage2ranks = ncbi.get_rank(names)
+                                    ranks2lineage = dict((rank,taxid) for (taxid, rank) in lineage2ranks.items())
+                                    if 'species' in ranks2lineage.keys():
+                                        taxidspecies=ranks2lineage['species']
+                                        taxidspecies_name=ncbi.get_taxid_translator([taxidspecies])
+                                        taxid2taxname_species=taxidspecies_name[taxidspecies]
+                                        speciesandtaxid=taxid2taxname_species+"_"+str(taxidspecies)
+                                        if not speciesandtaxid in SpeciesDic: 
+                                            SpeciesDic[speciesandtaxid]=[readname]
+                                        else:
+                                            SpeciesDic[speciesandtaxid].append(readname)
+                            for k, v in SpeciesDic.items():
+                                if len(v) >= dptresh:
+                                    print(str(k.split("_")[-1])+"\t"+k.split("_")[0]+"\t"+str(len(v)), file=o)
+                            # Extract the reads, outputed from the bowtie directory
+                            if Fastqfiles:
+                                outfolderclassifiedreads="Diamond/Classified_Reads/"
+                                try:
+                                    os.makedirs(outfolderclassifiedreads)
+                                except FileExistsError: 
+                                    pass
+                                if "_se_" in d: 
+                                    basename=d.split("/")[-1].split("_Diamond_230321.diamond.tsv")[0].replace("_se_","_") # remove _se_ to be able to link to original fastq
+                                if "_pe_" in d: 
+                                    basename=d.split("/")[-1].split("_Diamond_230321.diamond.tsv")[0].replace("_se_","_") # remove _pe_ to be able to link to original fastq
+                                for f in Fastqfiles:                                    
+                                    if basename in f: 
+                                        if f.endswith(".gz"): # If the files are gziped you need to use gzip open, save record to dict and get a basename from the fastq
+                                            Records=SeqIO.to_dict(SeqIO.parse(gzip.open(f, "rt"),'fastq'))
+                                            fname=f.split("/")[-1].replace(".unmapped","").split(".fastq.gz")[0]
+                                        else:
+                                            Records=SeqIO.to_dict(SeqIO.parse(f,'fastq'))
+                                            fname=f.split("/")[-1].replace(".unmapped","").split(".fastq")[0]
+                                        for k, v in SpeciesDic.items():
+                                            if len(v) >= dptresh: 
+                                                taxa=k.split("_")[0].replace(" ","")+"_"+str(k.split("_")[-1])
+                                                outfoldersspecies="Diamond/Classified_Reads/"+taxa
+                                                try:
+                                                    os.makedirs(outfoldersspecies)
+                                                except FileExistsError: 
+                                                    pass
+                                                outfq=outfoldersspecies+"/"+taxa+"_"+fname+".fastq"
+                                                with open(outfq, "w") as o: 
+                                                    for reads in v:
+                                                        rec=Records[reads].format("fastq").strip()
+                                                        print(rec, file=o)
+                                                
+
+
+
+def ParseDiamond_withTaxpasta(taxprofdict, taxdump,dptresh):
     """
     """
     subfolders = [ f.path for f in os.scandir(taxprofdict) if f.is_dir() ]
     tool="diamond"
-
     Fastqfiles=[]
-    
-    
     for i in subfolders:
         if "bowtie2" in i: # The unmapped fastq should be in the bowtie2 dir 
             subfolders_2=[ f.path for f in os.scandir(i) if f.is_dir() ]
@@ -88,8 +172,6 @@ def ParseDiamond(taxprofdict, taxdump,dptresh):
                                         print(str(speciesid)+"\t"+str(speciesname)+"\t"+str(Counts), file=o)
                                         if not speciesid in Annotation:
                                             Annotation[int(speciesid)]=speciesname
-
-
                         # Extract the reads, outputed from the bowtie directory
                         if Fastqfiles:
                             #If there is fastq files, loop through the diamond tsv to get the read name, append that to species in a dictionary, for each species generate a folder. 
@@ -125,18 +207,15 @@ def ParseDiamond(taxprofdict, taxdump,dptresh):
                                         outfq="Diamond/Classified_Reads/"+key+"/"+key+"_"+fname+".fastq" # Out fastq filename
                                         with open(outfq, "w") as o:
                                             for v in values:
-
                                                 try: # We need to handle if the PE info is within the read name, then it is just a try as the exact hit might be in R2 instead of R1. 
                                                     rec=Records[v].format("fastq").strip()
-                                                    
+                                        
                                                     print(rec, file=o)
                                                 except KeyError:
                                                     continue
                         else:
                             print("Warning, no fastqfiles Available. No read extraction")
 
-
-                                    
 def main(taxprofdict, taxdump, dptresh):
     ParseDiamond(taxprofdict, taxdump, dptresh)
 
