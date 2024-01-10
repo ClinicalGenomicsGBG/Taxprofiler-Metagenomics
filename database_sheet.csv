@@ -1,5 +1,5 @@
 tool,db_name,db_params,db_path
-kraken2,Kraken2_PlusPF_091023,--quick,/medstore/databases/taxprofiler/databases/kraken2/Kraken2_PlusPF_091023
+kraken2,Kraken2_PlusPF_091023,,/medstore/databases/taxprofiler/databases/kraken2/Kraken2_PlusPF_091023
 diamond,Diamond_230321,,/medstore/databases/taxprofiler/databases/diamond/
 krakenuniq,krakenuniq_MicrobialDB,,/medstore/databases/taxprofiler/databases/KrakenUniq_MicrobialDB
 metaphlan,Metaphlan4,,/medstore/databases/taxprofiler/databases/Metaphlan4
