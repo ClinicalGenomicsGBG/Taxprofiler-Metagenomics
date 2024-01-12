@@ -20,6 +20,9 @@ def helpMessage(){
 	     --TaxDump_gz	Path to taxdump om gzip (required for Diamond)
 	     -c			configuration file for nextflow (Works for Mandalores nodes)
     Optional arguments:
+    	     --IgnoreReadExtraction_Diamond
+	     --IgnoreReadExtraction_kraken2
+	     --IgnoreReadExtraction_krakenuniq
     	     --help   This usage statement
 
     """
@@ -27,6 +30,10 @@ def helpMessage(){
 
 // show help message
 params.help=false
+params.IgnoreReadExtraction_Diamond=false
+params.IgnoreReadExtraction_kraken2=false
+params.IgnoreReadExtraction_krakenuniq=false
+
 
 if (params.help){
    helpMessage()
@@ -69,11 +76,20 @@ process ParseKraken2 {
 		path 'Kraken2', emit: Kraken2_outs
 
 	script:
+	if (params.IgnoreReadExtraction_kraken2)
+
 	"""
 
-	/apps/bio/software/anaconda2/envs/TaxProfiler/bin/python /medstore/Development/Metagenomics/TaxProfiler/TestSamples_FromMicro/TaxprofilerRun/Scripts/Taxprofiler-Metagenomics/Scripts/ParserScripts/ParseKraken2.py --Taxprofiler_out ${Taxprofiler_out_p} --DepthTresh ${DepthTresh_p} 
+	/apps/bio/software/anaconda2/envs/TaxProfiler/bin/python /medstore/Development/Metagenomics/TaxProfiler/TestSamples_FromMicro/TaxprofilerRun/Scripts/Taxprofiler-Metagenomics/Scripts/ParserScripts/ParseKraken2.py --Taxprofiler_out ${Taxprofiler_out_p} --DepthTresh ${DepthTresh_p} --IgnoreReadExtraction
 
 	"""		
+
+	else
+
+	"""
+	/apps/bio/software/anaconda2/envs/TaxProfiler/bin/python /medstore/Development/Metagenomics/TaxProfiler/TestSamples_FromMicro/TaxprofilerRun/Scripts/Taxprofiler-Metagenomics/Scripts/ParserScripts/ParseKraken2.py --Taxprofiler_out ${Taxprofiler_out_p} --DepthTresh ${DepthTresh_p}
+
+	"""
 
 }
 
@@ -90,6 +106,14 @@ process ParseKrakenUniq {
 		path 'KrakenUniq', emit: KrakenUniq_outs
 
 	script:
+	if (params.IgnoreReadExtraction_krakenuniq)
+	"""
+
+	/apps/bio/software/anaconda2/envs/TaxProfiler/bin/python /medstore/Development/Metagenomics/TaxProfiler/TestSamples_FromMicro/TaxprofilerRun/Scripts/Taxprofiler-Metagenomics/Scripts/ParserScripts/ParseKrakenUniq.py --Taxprofiler_out ${Taxprofiler_out_p} --DepthTresh ${DepthTresh_p} --IgnoreReadExtraction
+
+	"""		
+
+	else
 	"""
 
 	/apps/bio/software/anaconda2/envs/TaxProfiler/bin/python /medstore/Development/Metagenomics/TaxProfiler/TestSamples_FromMicro/TaxprofilerRun/Scripts/Taxprofiler-Metagenomics/Scripts/ParserScripts/ParseKrakenUniq.py --Taxprofiler_out ${Taxprofiler_out_p} --DepthTresh ${DepthTresh_p} 
@@ -114,6 +138,13 @@ process ParseDiamond {
 		path 'Diamond', emit: Diamond_outs
 
 	script:
+	if (params.IgnoreReadExtraction_Diamond)
+	"""
+	/apps/bio/software/anaconda2/envs/TaxProfiler/bin/python /medstore/Development/Metagenomics/TaxProfiler/TestSamples_FromMicro/TaxprofilerRun/Scripts/Taxprofiler-Metagenomics/Scripts/ParserScripts/ParseDiamond.py --Taxprofiler_out ${Taxprofiler_out_p} --DepthTresh ${DepthTresh_p} --taxdumpfile ${TaxDump_gz_p} --IgnoreReadExtraction
+	"""
+	
+	else 
+
 	"""
 
 	/apps/bio/software/anaconda2/envs/TaxProfiler/bin/python /medstore/Development/Metagenomics/TaxProfiler/TestSamples_FromMicro/TaxprofilerRun/Scripts/Taxprofiler-Metagenomics/Scripts/ParserScripts/ParseDiamond.py --Taxprofiler_out ${Taxprofiler_out_p} --DepthTresh ${DepthTresh_p} --taxdumpfile ${TaxDump_gz_p}
@@ -180,9 +211,9 @@ workflow {
 
 	//--- Workflow --- 
 	//ParseMetaPhlan4(Taxprofiler_out_p, DepthTresh_p)
-	ParseKraken2(Taxprofiler_out_p, DepthTresh_p)
+	//ParseKraken2(Taxprofiler_out_p, DepthTresh_p)
 	// Turning of krakenuniq for now, it is to memory heavy 
-	ParseKrakenUniq(Taxprofiler_out_p, DepthTresh_p) 
+	//ParseKrakenUniq(Taxprofiler_out_p, DepthTresh_p) 
 	ParseDiamond(Taxprofiler_out_p, DepthTresh_p, TaxDump_gz_p)
 	// Ganon is just for tester here as well, we might need to remove it also! 
 	//ParseGanon(Taxprofiler_out_p, DepthTresh_p)

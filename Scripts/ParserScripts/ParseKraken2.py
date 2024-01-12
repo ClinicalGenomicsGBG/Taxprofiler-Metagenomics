@@ -26,13 +26,14 @@ def parseArgs(argv):
     '''
     parser = argparse.ArgumentParser(description='Takes the output from taxprofiler and parses it')
     parser.add_argument("--Taxprofiler_out", dest = 'taxprofdict', required=True, help ="Output folder from taxprofiler (required)")
-    parser.add_argument("--DepthTresh", dest = 'dptresh',default=10, type=int, help ="Minimum depth required to be reported")
+    parser.add_argument("--DepthTresh", dest = 'dptresh',default=10, type=int, help ="Minimum depth required to be reported (Default 10)")
+    parser.add_argument("--IgnoreReadExtraction", dest = 'IgnoreReadExtraction',help ="If used the reads will not be extracted (Optional)", action='store_true')
     arguments = parser.parse_args(argv)
     return arguments
 
 
 
-def ParseKraken2(taxprofdict, dptresh):
+def ParseKraken2(taxprofdict, dptresh, IgnoreReadExtraction):
     """
     
     """
@@ -89,7 +90,7 @@ def ParseKraken2(taxprofdict, dptresh):
                             
                             fastqs=[R1, R2]
                             for f in fastqs:
-                                if os.path.exists(f):
+                                if os.path.exists(f) and not IgnoreReadExtraction:
                                     SpeciesWithFastq={}
                                     with gzip.open(f, "rt") as handle:
                                         for header, seq, qual in FastqGeneralIterator(handle):
@@ -129,7 +130,7 @@ def ParseKraken2(taxprofdict, dptresh):
                                         
                         elif "_se_" in r: # We have the SE flag added by taxprofiler, this was run in Single END mode!
                             fastq=k+"/"+samplename+".kraken2.classified.fastq.gz" # We need to have it in gzip format!
-                            if os.path.exists(fastq): # We have the classified reads fastq in kraken2 out, therefore we can extract the reads                            
+                            if os.path.exists(fastq) and not IgnoreReadExtraction: # We have the classified reads fastq in kraken2 out, therefore we can extract the reads                            
                                 SpeciesWithFastq={}
                                 with gzip.open(fastq, "rt") as handle:
                                     for header, seq, qual in FastqGeneralIterator(handle):
@@ -161,11 +162,11 @@ def ParseKraken2(taxprofdict, dptresh):
 
 
                                     
-def main(taxprofdict, dptresh):
-    ParseKraken2(taxprofdict, dptresh)
+def main(taxprofdict, dptresh, IgnoreReadExtraction):
+    ParseKraken2(taxprofdict, dptresh, IgnoreReadExtraction)
     
     
 if __name__ == '__main__':
     args=parseArgs(sys.argv[1:])
-    main(args.taxprofdict, args.dptresh)
+    main(args.taxprofdict, args.dptresh, args.IgnoreReadExtraction)
 

@@ -26,8 +26,8 @@ def parseArgs(argv):
     parser = argparse.ArgumentParser(description='Takes the output from taxprofiler and parses it')
     parser.add_argument("--Taxprofiler_out", dest = 'taxprofdict', required=True, help ="Output folder from taxprofiler (required)")
     parser.add_argument("--taxdumpfile", dest = 'taxdump', help ="Path to taxdump (required)", required=True)
-    parser.add_argument("--DepthTresh", dest = 'dptresh',default=10,type=int,help ="Minimum depth required to be reported")
-    parser.add_argument("--IgnoreReadExtraction", dest = 'IgnoreReadExtraction',help ="If used the reads from Diamond will not be extracted", action='store_true')
+    parser.add_argument("--DepthTresh", dest = 'dptresh',default=10,type=int,help ="Minimum depth required to be reported (Default 10)")
+    parser.add_argument("--IgnoreReadExtraction", dest = 'IgnoreReadExtraction',help ="If used the reads will not be extracted (Optinal)", action='store_true')
     arguments = parser.parse_args(argv)
     return arguments
 
