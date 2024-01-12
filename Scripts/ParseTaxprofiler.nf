@@ -211,9 +211,9 @@ workflow {
 
 	//--- Workflow --- 
 	//ParseMetaPhlan4(Taxprofiler_out_p, DepthTresh_p)
-	//ParseKraken2(Taxprofiler_out_p, DepthTresh_p)
+	ParseKraken2(Taxprofiler_out_p, DepthTresh_p)
 	// Turning of krakenuniq for now, it is to memory heavy 
-	//ParseKrakenUniq(Taxprofiler_out_p, DepthTresh_p) 
+	ParseKrakenUniq(Taxprofiler_out_p, DepthTresh_p) 
 	ParseDiamond(Taxprofiler_out_p, DepthTresh_p, TaxDump_gz_p)
 	// Ganon is just for tester here as well, we might need to remove it also! 
 	//ParseGanon(Taxprofiler_out_p, DepthTresh_p)
