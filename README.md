@@ -79,3 +79,7 @@ qsub runParser_nextflow.sh <Full/Path/To/TaxprofilerOutPutDir> <ParserOutputDir>
 
 ```
 
+## Setting up the server config
+
+The config is tailored for mandalore but can be tweaked. This config was created to make sure we avoid the memory issues as metagenomics analyses are very memory heavy.  
+We set the ```queueSize=20``` this means we are not allowing more then 20 processes at the time. For the process_high_memory and the process_high we are using ```MaxForks=1```. This means that we are only allowing one run at the time for these. This affect the ```bowtie2``` (for removing the human reads), ```kraken2``` and ```krakenuniq```. We are only allowing one process, this is a bottleneck. One could generate one withName rule for each but then you need to define to which node you want to queue towards which is not optimal as we dont know which nodes are free beforehand. You only want 1 of these heavy processes in one node otherwise you risk a crash. We set a special process for ```Diamond```. Diamond is ```process_medium```, we overwrite the ```process_medium``` for ```Diamond``` with ```withName```. Here we have ```maxForks=10``` running it on ```kuat```. This is for now, but did not want to risk the diamond processes in a node were a heavy process is running. Diamond is slow but to many processes at the same time will clogg the memory. 

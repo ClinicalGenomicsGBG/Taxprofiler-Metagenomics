@@ -26,13 +26,14 @@ def parseArgs(argv):
     '''
     parser = argparse.ArgumentParser(description='Takes the output from taxprofiler and parses it')
     parser.add_argument("--Taxprofiler_out", dest = 'taxprofdict', required=True, help ="Output folder from taxprofiler (required)")
-    parser.add_argument("--DepthTresh", dest = 'dptresh',default=10, type=int, help ="Minimum depth required to be reported")
+    parser.add_argument("--DepthTresh", dest = 'dptresh',default=10, type=int, help ="Minimum depth required to be reported (Default 10)")
+    parser.add_argument("--IgnoreReadExtraction", dest = 'IgnoreReadExtraction',help ="If used the reads will not be extracted (Optional)", action='store_true')
     arguments = parser.parse_args(argv)
     return arguments
 
 
 
-def ParseKrakenUniq(taxprofdict, dptresh):
+def ParseKrakenUniq(taxprofdict, dptresh, IgnoreReadExtraction):
     """
     
     """
@@ -106,50 +107,35 @@ def ParseKrakenUniq(taxprofdict, dptresh):
                             
                         # Only for SE as it is now, PE is missing untill update from taxprofiler! 
                         fastq=k+"/"+samplename+".classified.fastq.gz"
-
-    
-                        if os.path.exists(fastq):
-
+                        if os.path.exists(fastq) and not IgnoreReadExtraction:
                             outfolderClassifiedReads="KrakenUniq/Classified_Reads"
                             try:
                                 os.makedirs(outfolderClassifiedReads)
                             except FileExistsError:
                                 pass
                             
-                            
                             Records=SeqIO.to_dict(SeqIO.parse(gzip.open(fastq, "rt"),'fastq'))
-
-
-
                             for key, values in specieswithReadnames.items():
-
-
                                 if len(values)>=dptresh: 
-
                                     speciesIdentifierkey=key.replace(" ","_").replace("(","").replace(")","").replace("/","") # Remove space, remove parantesis, remove from the species names
-
-
                                     outfolderspecies=outfolderClassifiedReads+"/"+speciesIdentifierkey
-                                    
-
+                            
                                     try:
                                         os.makedirs(outfolderspecies)
                                     except FileExistsError:
                                         pass
                                     outfastq=outfolderspecies+"/"+speciesIdentifierkey+"_"+samplename+".fastq"
-
-
                                     with open(outfastq,  "w") as o:
                                         for reads in values:
                                             rec=Records[reads].format("fastq").strip()
                                             print(rec, file=o)
 
                                     
-def main(taxprofdict, dptresh):
-    ParseKrakenUniq(taxprofdict, dptresh)
+def main(taxprofdict, dptresh, IgnoreReadExtraction):
+    ParseKrakenUniq(taxprofdict, dptresh, IgnoreReadExtraction)
     
     
 if __name__ == '__main__':
     args=parseArgs(sys.argv[1:])
-    main(args.taxprofdict, args.dptresh)
+    main(args.taxprofdict, args.dptresh, args.IgnoreReadExtraction)
 

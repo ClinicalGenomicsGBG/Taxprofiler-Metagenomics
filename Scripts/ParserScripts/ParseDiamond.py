@@ -26,12 +26,13 @@ def parseArgs(argv):
     parser = argparse.ArgumentParser(description='Takes the output from taxprofiler and parses it')
     parser.add_argument("--Taxprofiler_out", dest = 'taxprofdict', required=True, help ="Output folder from taxprofiler (required)")
     parser.add_argument("--taxdumpfile", dest = 'taxdump', help ="Path to taxdump (required)", required=True)
-    parser.add_argument("--DepthTresh", dest = 'dptresh',default=10,type=int,help ="Minimum depth required to be reported")
+    parser.add_argument("--DepthTresh", dest = 'dptresh',default=10,type=int,help ="Minimum depth required to be reported (Default 10)")
+    parser.add_argument("--IgnoreReadExtraction", dest = 'IgnoreReadExtraction',help ="If used the reads will not be extracted (Optinal)", action='store_true')
     arguments = parser.parse_args(argv)
     return arguments
 
 
-def ParseDiamond(taxprofdict, taxdump,dptresh):
+def ParseDiamond(taxprofdict, taxdump,dptresh, IgnoreReadExtraction):    
     ncbi = NCBITaxa(taxdump_file=taxdump)
     subfolders = [ f.path for f in os.scandir(taxprofdict) if f.is_dir() ]
     tool="diamond"
@@ -79,7 +80,7 @@ def ParseDiamond(taxprofdict, taxdump,dptresh):
                                 if len(v) >= dptresh:
                                     print(str(k.split("_")[-1])+"\t"+k.split("_")[0]+"\t"+str(len(v)), file=o)
                             # Extract the reads, outputed from the bowtie directory
-                            if Fastqfiles:
+                            if Fastqfiles and not IgnoreReadExtraction:
                                 outfolderclassifiedreads="Diamond/Classified_Reads/"
                                 try:
                                     os.makedirs(outfolderclassifiedreads)
@@ -216,11 +217,11 @@ def ParseDiamond_withTaxpasta(taxprofdict, taxdump,dptresh):
                         else:
                             print("Warning, no fastqfiles Available. No read extraction")
 
-def main(taxprofdict, taxdump, dptresh):
-    ParseDiamond(taxprofdict, taxdump, dptresh)
+def main(taxprofdict, taxdump, dptresh, IgnoreReadExtraction):
+    ParseDiamond(taxprofdict, taxdump, dptresh, IgnoreReadExtraction)
 
 
 if __name__ == '__main__':
     args=parseArgs(sys.argv[1:])
-    main(args.taxprofdict, args.taxdump, args.dptresh)
+    main(args.taxprofdict, args.taxdump, args.dptresh, args.IgnoreReadExtraction)
 
