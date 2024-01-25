@@ -186,12 +186,12 @@ process ParseExcel {
 		val KrakenUniq_outs
 		
 	output:
-		path 'Diamond', emit: Diamond_outs
+		path 'Out_ParsedExcel.xlsx', emit: ExcelOut
 
 	script:
 	"""
 
-	/apps/bio/software/anaconda2/envs/TaxProfiler/bin/python /medstore/Development/Metagenomics/TaxProfiler/TestSamples_FromMicro/TaxprofilerRun/Scripts/Taxprofiler-Metagenomics/Scripts/ParserScripts/WriteExcel.py --Tools ${Diamond_outs} ${Kraken2_outs} ${Metaphlan4_outs} ${Ganon_outs}
+	/apps/bio/software/anaconda2/envs/TaxProfiler/bin/python /medstore/Development/Metagenomics/TaxProfiler/TestSamples_FromMicro/TaxprofilerRun/Scripts/Taxprofiler-Metagenomics/Scripts/ParserScripts/WriteExcel.py --Tools ${Diamond_outs} ${Kraken2_outs} ${Ganon_outs}
 
 	"""		
 
@@ -211,11 +211,11 @@ workflow {
 
 	//--- Workflow --- 
 	//ParseMetaPhlan4(Taxprofiler_out_p, DepthTresh_p)
-	//ParseKraken2(Taxprofiler_out_p, DepthTresh_p)
+	ParseKraken2(Taxprofiler_out_p, DepthTresh_p)
 	// Turning of krakenuniq for now, it is to memory heavy 
-	//ParseKrakenUniq(Taxprofiler_out_p, DepthTresh_p) 
+	ParseKrakenUniq(Taxprofiler_out_p, DepthTresh_p) 
 	ParseDiamond(Taxprofiler_out_p, DepthTresh_p, TaxDump_gz_p)
 	// Ganon is just for tester here as well, we might need to remove it also! 
 	//ParseGanon(Taxprofiler_out_p, DepthTresh_p)
-	//ParseExcel(ParseDiamond.out.Diamond_outs, ParseKraken2.out.Kraken2_outs)
+	ParseExcel(ParseDiamond.out.Diamond_outs, ParseKraken2.out.Kraken2_outs, ParseKrakenUniq.out.KrakenUniq_outs)
 }

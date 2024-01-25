@@ -18,7 +18,6 @@ import xlsxwriter
 
 
 
-
 def parseArgs(argv):
     '''
     Parsing the arguments
@@ -54,29 +53,58 @@ def ParseDiamond(taxprofdict, taxdump,dptresh, IgnoreReadExtraction):
                     diamondtsv=glob.glob(k+"/*tsv")
                     for d in diamondtsv: 
                         outcountsforplotting="Diamond/"+d.split("/")[-1].split("_Diamond_230321.diamond.tsv")[0]+"_CountsForplotting.txt"
+
+                        #TaxidsForDiamond={}
+
+                        TaxidsForDiamond=[]
+                        
+                        # Read the diamond tsv to create a dictionary with taxid and readname
+                        with open(d, "r") as diamondtsv:
+                            for l in diamondtsv:
+                                l=l.strip()
+                                readname=l.split("\t")[0]
+                                taxid=int(l.split("\t")[1])
+                                evalue=float(l.split("\t")[2])
+                                if not taxid==0 and not evalue==0.0:
+                                    if not taxid in TaxidsForDiamond:
+                                        TaxidsForDiamond.append(taxid)
+                                        
+
+                        # Next generate a dictionary with species information from this dict! 
+                        # My taxid as key, the species name and the taxid as item, 
+                        SpeciesDict={}
+                        for taxid in TaxidsForDiamond:
+                            lineage = ncbi.get_lineage(taxid)
+                            names = ncbi.get_taxid_translator(lineage)
+                            lineage2ranks = ncbi.get_rank(names)
+                            ranks2lineage = dict((rank,taxid) for (taxid, rank) in lineage2ranks.items())
+                            if 'species' in ranks2lineage.keys():
+                                taxidspecies=ranks2lineage['species']
+                                taxidspecies_name=ncbi.get_taxid_translator([taxidspecies])
+                                taxid2taxname_species=taxidspecies_name[taxidspecies]
+                                speciesandtaxid=taxid2taxname_species+"_"+str(taxidspecies)
+                                if not speciesandtaxid in SpeciesDict:
+                                    SpeciesDict[taxid]=speciesandtaxid
+        
+                        # Species with reads, loop throught he tsv again, 
                         with open(d, "r") as diamondtsv, open(outcountsforplotting, "w") as o: 
                             print("TaxID\tSpecies\tCounts", file=o)
-                            SpeciesDic={}
+                            Species_withReads={}
                             for l in diamondtsv: 
                                 l=l.strip()
                                 readname=l.split("\t")[0]
-                                taxid=float(l.split("\t")[1])
+                                taxid=int(l.split("\t")[1])
                                 evalue=float(l.split("\t")[2])
-                                if not taxid==0 and not evalue==0: 
-                                    lineage = ncbi.get_lineage(taxid)
-                                    names = ncbi.get_taxid_translator(lineage)
-                                    lineage2ranks = ncbi.get_rank(names)
-                                    ranks2lineage = dict((rank,taxid) for (taxid, rank) in lineage2ranks.items())
-                                    if 'species' in ranks2lineage.keys():
-                                        taxidspecies=ranks2lineage['species']
-                                        taxidspecies_name=ncbi.get_taxid_translator([taxidspecies])
-                                        taxid2taxname_species=taxidspecies_name[taxidspecies]
-                                        speciesandtaxid=taxid2taxname_species+"_"+str(taxidspecies)
-                                        if not speciesandtaxid in SpeciesDic: 
-                                            SpeciesDic[speciesandtaxid]=[readname]
+                                if not taxid==0 and not evalue==0.0:
+                                    if taxid in SpeciesDict:
+                                        specieswithtaxid=SpeciesDict[taxid]
+                                        #speciesandtaxid=species+"_"+str(taxid)                                        
+                                        if not specieswithtaxid in Species_withReads: 
+                                            Species_withReads[specieswithtaxid]=[readname]
                                         else:
-                                            SpeciesDic[speciesandtaxid].append(readname)
-                            for k, v in SpeciesDic.items():
+                                            Species_withReads[specieswithtaxid].append(readname)
+                                    
+                            for k, v in Species_withReads.items():
                                 if len(v) >= dptresh:
                                     print(str(k.split("_")[-1])+"\t"+k.split("_")[0]+"\t"+str(len(v)), file=o)
                             # Extract the reads, outputed from the bowtie directory
@@ -98,7 +126,7 @@ def ParseDiamond(taxprofdict, taxdump,dptresh, IgnoreReadExtraction):
                                         else:
                                             Records=SeqIO.to_dict(SeqIO.parse(f,'fastq'))
                                             fname=f.split("/")[-1].replace(".unmapped","").split(".fastq")[0]
-                                        for k, v in SpeciesDic.items():
+                                        for k, v in Species_withReads.items():
                                             if len(v) >= dptresh: 
                                                 taxa=k.split("_")[0].replace(" ","")+"_"+str(k.split("_")[-1])
                                                 outfoldersspecies="Diamond/Classified_Reads/"+taxa
@@ -112,8 +140,6 @@ def ParseDiamond(taxprofdict, taxdump,dptresh, IgnoreReadExtraction):
                                                         rec=Records[reads].format("fastq").strip()
                                                         print(rec, file=o)
                                                 
-
-
 
 def ParseDiamond_withTaxpasta(taxprofdict, taxdump,dptresh):
     """
