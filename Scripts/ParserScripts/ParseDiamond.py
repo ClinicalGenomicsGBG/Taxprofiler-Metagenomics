@@ -163,7 +163,7 @@ def ParseDiamond(taxprofdict, taxdump,dptresh, IgnoreReadExtraction):
                             print("nReads total:\t"+str(ntotreads), file=o4)
                             print("nReads classified:\t"+str(ClassifiedReads), file=o4)
                             print("nReads to Species:\t"+str(nReadsinSpecies), file=o4)
-                            print("nReads to Species_discarded (due to low counts)" + str(nReadsSpecies_discarded), file=o4)
+                            print("nReads to Species_discarded (due to low counts):\t" + str(nReadsSpecies_discarded), file=o4)
                             print("nReads to Higher ranks:\t" + str(nReadsHighTaxLevels), file=o4)
                             
                             # Extract the reads, outputed from the bowtie directory
