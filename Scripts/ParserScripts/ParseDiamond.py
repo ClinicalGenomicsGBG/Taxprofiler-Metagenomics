@@ -16,8 +16,6 @@ import sys
 import time
 import xlsxwriter
 
-
-
 def parseArgs(argv):
     '''
     Parsing the arguments

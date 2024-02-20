@@ -191,7 +191,7 @@ process ParseExcel {
 	script:
 	"""
 
-	/apps/bio/software/anaconda2/envs/TaxProfiler/bin/python /medstore/Development/Metagenomics/TaxProfiler/TestSamples_FromMicro/TaxprofilerRun/Scripts/Taxprofiler-Metagenomics/Scripts/ParserScripts/WriteExcel.py --Tools ${Diamond_outs} ${Kraken2_outs} ${Ganon_outs}
+	/apps/bio/software/anaconda2/envs/TaxProfiler/bin/python /medstore/Development/Metagenomics/TaxProfiler/TestSamples_FromMicro/TaxprofilerRun/Scripts/Taxprofiler-Metagenomics/Scripts/ParserScripts/WriteExcel.py --Tools ${Diamond_outs} ${Kraken2_outs} ${KrakenUniq_outs}
 
 	"""		
 
