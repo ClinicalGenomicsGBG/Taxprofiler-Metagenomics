@@ -49,7 +49,6 @@ def ParseKrakenUniq(taxprofdict, dptresh, IgnoreReadExtraction):
         if tool in i: # We can extract reads using krak
             subfolders_2=[ f.path for f in os.scandir(i) if f.is_dir() ] # Check subfolders in kraken2 dir
             for k in subfolders_2:
-            
                 if "krakenuniq_MicrobialDB" in k:
                     krakdb=k.split("/")[-1]
                     try:
@@ -62,7 +61,8 @@ def ParseKrakenUniq(taxprofdict, dptresh, IgnoreReadExtraction):
                         SpeciesCounts={}
                         samplename=r.split(".krakenuniq.report.txt")[0].split("/")[-1]                    
                         outforplot="KrakenUniq/"+samplename+"_CountsForplotting.txt"
-
+                        speciesindex=0 # to check for the incrementation
+                        
                         with open(r, "r") as report, open(outforplot, "w") as o:
                             print("TaxID\tSpecies\tCounts", file=o)
                             for l in report:
@@ -70,26 +70,29 @@ def ParseKrakenUniq(taxprofdict, dptresh, IgnoreReadExtraction):
                                 if not (l.startswith("#") or l.startswith("%")):
                                     taxnr=l.split("\t")[6]
                                     counts=int(l.split("\t")[1])
+                                    taxcounts=int(l.split("\t")[2])
                                     taxlevel=l.split("\t")[7] # Rank
                                     taxname=l.split("\t")[-1].lstrip()
+                                    taxaindex=l.split("\t")[-1].split(" ").count("")
                                     if taxlevel=="species":
+                                        speciesindex=l.split("\t")[-1].split(" ").count("")
                                         speciesTresh=counts
                                         if counts >= dptresh: # If our taxlevel is species
                                             print(str(taxnr)+"\t"+taxname+"\t"+str(counts), file=o)
                                             speciesStrainAnno[taxname]=[taxnr]
                                             speciesLinkedTostrain=taxname # We save this as we can link the strains to this species
                                             SpeciesCounts[taxname]=counts
-                                        
-                                    elif taxlevel=="subspecies" or taxlevel=="strain" : # There might also be sub species and strains, 
-                                        if speciesTresh >= dptresh: # We need to make sure that the species treshold is more than or equal to the depthtreshold, if the species is ok we append the strains if they are there!
-                                            speciesStrainAnno[speciesLinkedTostrain].append(taxnr)
-
-
-
+                                            
+                                    else: # Check the incrementation for read extraction!
+                                        if taxaindex < speciesindex: # If we are at a lower incrementation we always need to reset it! 
+                                            speciesindex = 0
+                                        if not taxcounts == 0 and taxaindex > speciesindex and speciesindex != 0: # We are searching for the increments here, incremented more than species and has a count to it
+                                            if speciesTresh >= dptresh:
+                                                speciesStrainAnno[speciesLinkedTostrain].append(taxnr)
+                                                
                         # To get to the read names we need to go for the classified report first
-
+                        
                         classified=k+"/"+samplename+".krakenuniq.classified.txt"
-
                         if os.path.exists(classified):
                             specieswithReadnames={}
                             with open(classified, "r") as inf:
@@ -106,7 +109,8 @@ def ParseKrakenUniq(taxprofdict, dptresh, IgnoreReadExtraction):
                                                 specieswithReadnames[key].append(readname)
                             
                         # Only for SE as it is now, PE is missing untill update from taxprofiler! 
-                        fastq=k+"/"+samplename+".classified.fastq.gz"
+                        fastq=k+"/"+samplename+".classified.fasta.gz"
+                        
                         if os.path.exists(fastq) and not IgnoreReadExtraction:
                             outfolderClassifiedReads="KrakenUniq/Classified_Reads"
                             try:
@@ -116,6 +120,7 @@ def ParseKrakenUniq(taxprofdict, dptresh, IgnoreReadExtraction):
                             
                             Records=SeqIO.to_dict(SeqIO.parse(gzip.open(fastq, "rt"),'fastq'))
                             for key, values in specieswithReadnames.items():
+                                
                                 if len(values)>=dptresh: 
                                     speciesIdentifierkey=key.replace(" ","_").replace("(","").replace(")","").replace("/","") # Remove space, remove parantesis, remove from the species names
                                     outfolderspecies=outfolderClassifiedReads+"/"+speciesIdentifierkey
@@ -130,7 +135,10 @@ def ParseKrakenUniq(taxprofdict, dptresh, IgnoreReadExtraction):
                                             rec=Records[reads].format("fastq").strip()
                                             print(rec, file=o)
 
-                                    
+
+
+
+                                            
 def main(taxprofdict, dptresh, IgnoreReadExtraction):
     ParseKrakenUniq(taxprofdict, dptresh, IgnoreReadExtraction)
     
