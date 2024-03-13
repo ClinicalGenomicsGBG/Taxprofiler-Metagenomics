@@ -22,22 +22,21 @@ def parseArgs(argv):
     Parsing the arguments
     '''
     parser = argparse.ArgumentParser(description='Generates an Excel file for the different tools that were run in taxprofiler')
-    parser.add_argument("--Taxprofiler_Parsed", dest = 'TaxprofilerParsed', required=True, help ="Path to taxprofiler_parsed output directory")
+    parser.add_argument("--Tools", dest = 'Tools', required=True, help ="Path to taxprofiler_parsed output directory",nargs="+")
     arguments = parser.parse_args(argv)
     return arguments
 
 
 
-def SummarizeInExcel(TaxprofilerParsed):
+def SummarizeInExcel(Tools):
     """
     One sheet per Tool
     """
 
-    OutExcel=TaxprofilerParsed+"/"+"Out_ParsedExcel.xlsx"
+    OutExcel="Out_ParsedExcel.xlsx"
     writer = pd.ExcelWriter(OutExcel, engine='xlsxwriter')
     Countfiles={}
-    for tool in glob.glob(TaxprofilerParsed+"/*/"):
-        #print(tool)
+    for tool in Tools:
         Countfiles[tool]=[]
         countstoplot=glob.glob(tool+"/*_CountsForplotting.txt")
         for c in countstoplot:
@@ -55,20 +54,19 @@ def SummarizeInExcel(TaxprofilerParsed):
                 
             else:
                 dfMerged=dfMerged.merge(df, how='outer',on=['TaxID','Species']).fillna(0) # Merge and set NA to 0 
-
         cols=[i for i in dfMerged.columns if i not in ["TaxID","Species"]]
         for col in cols:
             dfMerged[col]=dfMerged[col].astype(int) # Convert from float to int, will be float as we introduced NAs in the merging
-        tool=folder.split(TaxprofilerParsed)[-1].strip("/")            
+        tool=folder.split("/")[-1]
         dfMerged.to_excel(writer, sheet_name=tool)
         
     writer.close()
                                     
-def main(TaxprofilerParsed):
-    SummarizeInExcel(TaxprofilerParsed)
+def main(Tools):
+    SummarizeInExcel(Tools)
     
 if __name__ == '__main__':
     args=parseArgs(sys.argv[1:])
-    main(args.TaxprofilerParsed)
+    main(args.Tools)
 
     
