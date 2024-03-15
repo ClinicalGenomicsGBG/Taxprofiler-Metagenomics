@@ -36,7 +36,6 @@ def ParseKrakenUniq(taxprofdict, dptresh, dbsheet, IgnoreReadExtraction):
     """
     
     """
-
     
     # Extract name of the database from the database sheet
 
@@ -64,12 +63,12 @@ def ParseKrakenUniq(taxprofdict, dptresh, dbsheet, IgnoreReadExtraction):
                         os.mkdir("KrakenUniq")
                     except FileExistsError:
                         logging.info('%s\tFolder already exists', time.ctime())
-                    reports=glob.glob(k+"/*.report.txt")
+                    reports=glob.glob(f'{k}/*.report.txt')
                     for r in reports: # Looping through the reports! 
                         speciesStrainAnno={} # To keep the species annotation and info if there is a strain annotation, we use this when we extract the detected reads from classified report
                         SpeciesCounts={}
                         samplename=r.split(".krakenuniq.report.txt")[0].split("/")[-1]                    
-                        outforplot="KrakenUniq/"+samplename+"_CountsForplotting.txt"
+                        outforplot=f'KrakenUniq/{samplename}_CountsForplotting.txt'
                         speciesindex=0 # to check for the incrementation
                         
                         with open(r, "r") as report, open(outforplot, "w") as o:
@@ -101,7 +100,7 @@ def ParseKrakenUniq(taxprofdict, dptresh, dbsheet, IgnoreReadExtraction):
                                                 
                         # To get to the read names we need to go for the classified report first
                         
-                        classified=k+"/"+samplename+".krakenuniq.classified.txt"
+                        classified=f'{k}/{samplename}.krakenuniq.classified.txt'
                         if os.path.exists(classified):
                             specieswithReadnames={}
                             with open(classified, "r") as inf:
@@ -117,17 +116,27 @@ def ParseKrakenUniq(taxprofdict, dptresh, dbsheet, IgnoreReadExtraction):
                                             else:
                                                 specieswithReadnames[key].append(readname)
                             
-                        # Only for SE as it is now, PE is missing untill update from taxprofiler! 
-                        fastq=k+"/"+samplename+".classified.fasta.gz"
+                        # Only for SE as it is now, PE is missing untill update from taxprofiler!
                         
-                        if os.path.exists(fastq) and not IgnoreReadExtraction:
+                        fastaSE=f'{k}/{samplename}.classified.fasta.gz'
+                        fastaPE=f'{k}/{samplename}.merged.classified.fasta.gz'
+                        
+                        if (os.path.exists(fastaSE) or os.path.exists(fastaPE)) and not IgnoreReadExtraction:
+
+                            if os.path.exists(fastaSE):
+                                # We have SE reads
+                                fasta=fastaSE
+                            if os.path.exists(fastaPE):
+                                # We have PE reads
+                                fasta=fastaPE
+                            
                             outfolderClassifiedReads="KrakenUniq/Classified_Reads"
                             try:
                                 os.makedirs(outfolderClassifiedReads)
                             except FileExistsError:
                                 pass
                             
-                            Records=SeqIO.to_dict(SeqIO.parse(gzip.open(fastq, "rt"),'fastq'))
+                            Records=SeqIO.to_dict(SeqIO.parse(gzip.open(fasta, "rt"),'fasta'))
                             for key, values in specieswithReadnames.items():
                                 
                                 if len(values)>=dptresh: 
@@ -138,10 +147,10 @@ def ParseKrakenUniq(taxprofdict, dptresh, dbsheet, IgnoreReadExtraction):
                                         os.makedirs(outfolderspecies)
                                     except FileExistsError:
                                         pass
-                                    outfastq=outfolderspecies+"/"+speciesIdentifierkey+"_"+samplename+".fastq"
-                                    with open(outfastq,  "w") as o:
+                                    outfasta='f{outfolderspecies}/{speciesIdentifierkey}_{samplename}.fasta'
+                                    with open(outfasta,  "w") as o:
                                         for reads in values:
-                                            rec=Records[reads].format("fastq").strip()
+                                            rec=Records[reads].format("fasta").strip()
                                             print(rec, file=o)
 
 
