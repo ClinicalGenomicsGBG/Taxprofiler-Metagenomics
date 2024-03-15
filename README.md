@@ -105,6 +105,42 @@ python Download_fastas_Refseq_Diamond.py --out PathToNewDiamondDB
 
 ```
 
+The script townloads all nun redundant fastas (aa) for bacteria, virus, archaea and funig, it also downlaods the taxdumpfile ```taxdump.tar.gz``` and the protein2 accession file ```prot.accession2taxid.FULL.gz``` needed for the taxonomy. 
+
+Extract the taxdump file
+
+```
+
+tar -xvf taxdump.tar.gz --directory taxdump
+
+```
+
+
+Then we create the diamond database
+
+```
+#!/bin/bash -l
+
+#$ -N DiamondDB
+#$ -j y
+#$ -cwd
+#$ -pe mpi 6
+#$ -q development.q
+
+module load miniconda/4.14.0
+
+source activate diamond
+
+set -x
+
+zcat fastas/*.faa.gz | diamond makedb --taxonmap prot.accession2taxid.FULL.gz --taxonnames taxdump/names.dmp --taxonnodes taxdump/nodes.dmp -d refseq_223_Bacteria_Virus_Archaea_Fungi_diamond -v --log --threads 6
+
+
+```
+
+
+```
+
 ## Kraken2
 
 Create a new folder for your download in folder ```/medstore/databases/taxprofiler/databases/kraken2/```
@@ -167,3 +203,4 @@ wget https://genome-idx.s3.amazonaws.com/kraken/uniq/krakendb-2023-08-08-MICROBI
 
 
 set the new paths to the database sheet
+
