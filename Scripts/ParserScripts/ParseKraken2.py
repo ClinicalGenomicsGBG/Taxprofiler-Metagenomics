@@ -27,32 +27,40 @@ def parseArgs(argv):
     parser = argparse.ArgumentParser(description='Takes the output from taxprofiler and parses it')
     parser.add_argument("--Taxprofiler_out", dest = 'taxprofdict', required=True, help ="Output folder from taxprofiler (required)")
     parser.add_argument("--DepthTresh", dest = 'dptresh',default=10, type=int, help ="Minimum depth required to be reported (Default 10)")
+    parser.add_argument("--Db_sheet", dest = 'dbsheet', help ="Path to Database sheet")
     parser.add_argument("--IgnoreReadExtraction", dest = 'IgnoreReadExtraction',help ="If used the reads will not be extracted (Optional)", action='store_true')
     arguments = parser.parse_args(argv)
     return arguments
 
 
 
-def ParseKraken2(taxprofdict, dptresh, IgnoreReadExtraction):
+def ParseKraken2(taxprofdict, dptresh, dbsheet, IgnoreReadExtraction):
     """
     
     """
+    
+    # Extract name of the database from the database sheet
 
+    with open(dbsheet, "r") as db:
+        next(db)
+        for l in db:
+            l=l.strip()
+            tool="kraken2"
+            if tool in l.split(",")[0]:
+                krakdb=l.split(",")[1]    
+    
     print("Parsing Kraken2...")
-
-
     
     subfolders = [ f.path for f in os.scandir(taxprofdict) if f.is_dir() ]
-    tool="kraken2"
     Fastqfiles=[]
     Annotation={}
+
     
     for i in subfolders:
         if tool in i: # We can extract reads using krak
             subfolders_2=[ f.path for f in os.scandir(i) if f.is_dir() ] # Check subfolders in kraken2 dir
             for k in subfolders_2:
-                if "Kraken2_" in k:
-                    krakdb=k.split("/")[-1]
+                if krakdb in k:
                     try:
                         os.mkdir("Kraken2")
                     except FileExistsError:
@@ -162,11 +170,11 @@ def ParseKraken2(taxprofdict, dptresh, IgnoreReadExtraction):
 
 
                                     
-def main(taxprofdict, dptresh, IgnoreReadExtraction):
-    ParseKraken2(taxprofdict, dptresh, IgnoreReadExtraction)
+def main(taxprofdict, dptresh, dbsheet, IgnoreReadExtraction):
+    ParseKraken2(taxprofdict, dptresh, dbsheet, IgnoreReadExtraction)
     
     
 if __name__ == '__main__':
     args=parseArgs(sys.argv[1:])
-    main(args.taxprofdict, args.dptresh, args.IgnoreReadExtraction)
+    main(args.taxprofdict, args.dptresh, args.dbsheet, args.IgnoreReadExtraction)
 
