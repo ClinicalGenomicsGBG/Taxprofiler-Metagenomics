@@ -147,7 +147,7 @@ def ParseKrakenUniq(taxprofdict, dptresh, dbsheet, IgnoreReadExtraction):
                                         os.makedirs(outfolderspecies)
                                     except FileExistsError:
                                         pass
-                                    outfasta='f{outfolderspecies}/{speciesIdentifierkey}_{samplename}.fasta'
+                                    outfasta=f'{outfolderspecies}/{speciesIdentifierkey}_{samplename}.fasta'
                                     with open(outfasta,  "w") as o:
                                         for reads in values:
                                             rec=Records[reads].format("fasta").strip()
