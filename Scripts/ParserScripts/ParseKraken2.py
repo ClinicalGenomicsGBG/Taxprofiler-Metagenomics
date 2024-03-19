@@ -74,9 +74,6 @@ def ParseKraken2(taxprofdict, dptresh, dbsheet, IgnoreReadExtraction):
                 
                     reports=glob.glob(k+"/*.report.txt")
                     for r in reports: # Looping through the reports!
-
-                        print(r)
-                        
                         speciesStrainAnno={} # To keep the species annotation and info if there is a strain annotation, we use this when we extract the detected reads from classified report
                         SpeciesCounts={}
                         samplename=r.split(".kraken2.kraken2.report.txt")[0].split("/")[-1]                    
