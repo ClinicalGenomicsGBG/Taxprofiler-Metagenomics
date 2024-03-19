@@ -46,10 +46,8 @@ def ParseKrakenUniq(taxprofdict, dptresh, dbsheet, IgnoreReadExtraction):
             tool="krakenuniq"
             if tool in l.split(",")[0]:
                 krakdb=l.split(",")[1]
-
-
+                
     print("Parsing KrakenUniq...")
-    
     subfolders = [ f.path for f in os.scandir(taxprofdict) if f.is_dir() ]
     Fastqfiles=[]
     Annotation={}
@@ -63,16 +61,31 @@ def ParseKrakenUniq(taxprofdict, dptresh, dbsheet, IgnoreReadExtraction):
                         os.mkdir("KrakenUniq")
                     except FileExistsError:
                         logging.info('%s\tFolder already exists', time.ctime())
+
+                    try:
+                        os.mkdir("KrakenUniq/Extras")
+                    except FileExistsError:
+                        logging.info('%s\tFolder already exists', time.ctime())
+                        
                     reports=glob.glob(f'{k}/*.report.txt')
                     for r in reports: # Looping through the reports! 
                         speciesStrainAnno={} # To keep the species annotation and info if there is a strain annotation, we use this when we extract the detected reads from classified report
                         SpeciesCounts={}
                         samplename=r.split(".krakenuniq.report.txt")[0].split("/")[-1]                    
                         outforplot=f'KrakenUniq/{samplename}_CountsForplotting.txt'
+                        outforplot_discaredSpecies=f'KrakenUniq/Extras/{samplename}_CountsForplotting_DiscaredSpecies.txt' # Species we remove when we are at lower treshold
+                        outforplot_extras=f'KrakenUniq/Extras/{samplename}_CountsForplotting_Others.txt' # Groups removed above species
+                        SpeciesDomainLinkage=f'KrakenUniq/Extras/{samplename}_SpeciesDomainLinkage.txt'
+
                         speciesindex=0 # to check for the incrementation
+
+                        Anyspecieshits="no"
                         
-                        with open(r, "r") as report, open(outforplot, "w") as o:
+                        with open(r, "r") as report, open(outforplot, "w") as o, open(outforplot_discaredSpecies, "w") as o_discardedSpecies, open(outforplot_extras, "w") as o_discarded_extras, open(SpeciesDomainLinkage, "w") as o_SpeciesDomainLinkage:
                             print("TaxID\tSpecies\tCounts", file=o)
+                            print("TaxID\tSpecies\tCounts", file=o_discardedSpecies)
+                            print("TaxID\tTaxname\tLineage\tCounts", file=o_discarded_extras) 
+                            print("TaxID\tTaxname\tDomain", file=o_SpeciesDomainLinkage)
                             for l in report:
                                 l=l.strip()
                                 if not (l.startswith("#") or l.startswith("%")):
@@ -82,18 +95,29 @@ def ParseKrakenUniq(taxprofdict, dptresh, dbsheet, IgnoreReadExtraction):
                                     taxlevel=l.split("\t")[7] # Rank
                                     taxname=l.split("\t")[-1].lstrip()
                                     taxaindex=l.split("\t")[-1].split(" ").count("")
+                                    if taxlevel == "superkingdom" or taxname=="other entries": # In krakenUniq we have other entires as well, if not using this they end up behind archeae
+                                        CurrentLineage=taxname
+                                    if Anyspecieshits == "no":
+                                        print(f'{taxnr}\t{taxname}\t{taxlevel}\t{counts}', file=o_discarded_extras) # We have not hit species yet, that it why we cannot use the first increment
                                     if taxlevel=="species":
+                                        Anyspecieshits = "yes" # we hit our first species so we can use the increment now
                                         speciesindex=l.split("\t")[-1].split(" ").count("")
                                         speciesTresh=counts
                                         if counts >= dptresh: # If our taxlevel is species
                                             print(str(taxnr)+"\t"+taxname+"\t"+str(counts), file=o)
+                                            print(f'{taxnr}\t{taxname}\t{CurrentLineage}', file=o_SpeciesDomainLinkage)
                                             speciesStrainAnno[taxname]=[taxnr]
                                             speciesLinkedTostrain=taxname # We save this as we can link the strains to this species
                                             SpeciesCounts[taxname]=counts
-                                            
-                                    else: # Check the incrementation for read extraction!
+                                        else: # We are at species but we are not meeting the user defined treshold
+                                            print(f'{taxnr}\t{taxname}\t{counts}', file=o_discardedSpecies)
+                                    else: # Check the incrementation for read extraction! This is due to some bein subspecies, some are strain and some are no rank. They are all included in the total of 
                                         if taxaindex < speciesindex: # If we are at a lower incrementation we always need to reset it! 
                                             speciesindex = 0
+
+                                            # We are futher up than the species index, then we can save it to discarded taxas above species
+                                            print(f'{taxnr}\t{taxname}\t{taxlevel}\t{counts}', file=o_discarded_extras) # We would only hit this one if we hit species once before! 
+                                            
                                         if not taxcounts == 0 and taxaindex > speciesindex and speciesindex != 0: # We are searching for the increments here, incremented more than species and has a count to it
                                             if speciesTresh >= dptresh:
                                                 speciesStrainAnno[speciesLinkedTostrain].append(taxnr)
