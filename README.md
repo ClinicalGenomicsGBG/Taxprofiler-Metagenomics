@@ -115,6 +115,15 @@ tar -xvf taxdump.tar.gz --directory taxdump
 
 ```
 
+There is a lot of things that can go wrong when you download so many individual files, You can check that they are complete, If something is wrong with one of the files the database creation just interupts without an error message. If you run make database with a concat file you will get an inflation error if one of the sequence files are corrupt. 
+
+Double check that all the faa files were downloaded correctly
+
+```
+
+for i in *faa.gz; do gzip -tv $i; done
+
+```
 
 Then we create the diamond database
 
