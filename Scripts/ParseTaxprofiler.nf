@@ -18,6 +18,7 @@ def helpMessage(){
 	     --DepthTresh	Depth Treshold to count it as detected
 	     --OutputDir	OutPut folder to store the results in 
 	     --TaxDump_gz	Path to taxdump om gzip (required for Diamond)
+	     --dbsheet		Path to databasesheet
 	     -c			configuration file for nextflow (Works for Mandalores nodes)
     Optional arguments:
     	     --IgnoreReadExtraction_Diamond
@@ -71,7 +72,9 @@ process ParseKraken2 {
 	input:
 		val Taxprofiler_out_p
 		val DepthTresh_p
+		val dbsheet_p
 		
+
 	output:
 		path 'Kraken2', emit: Kraken2_outs
 
@@ -80,14 +83,14 @@ process ParseKraken2 {
 
 	"""
 
-	/apps/bio/software/anaconda2/envs/TaxProfiler/bin/python /medstore/Development/Metagenomics/TaxProfiler/TestSamples_FromMicro/TaxprofilerRun/Scripts/Taxprofiler-Metagenomics/Scripts/ParserScripts/ParseKraken2.py --Taxprofiler_out ${Taxprofiler_out_p} --DepthTresh ${DepthTresh_p} --IgnoreReadExtraction
+	/apps/bio/software/anaconda2/envs/TaxProfiler/bin/python /medstore/Development/Metagenomics/TaxProfiler/TestSamples_FromMicro/TaxprofilerRun/Scripts/Taxprofiler-Metagenomics/Scripts/ParserScripts/ParseKraken2.py --Taxprofiler_out ${Taxprofiler_out_p} --DepthTresh ${DepthTresh_p} --Db_sheet ${dbsheet_p} --IgnoreReadExtraction
 
 	"""		
 
 	else
 
 	"""
-	/apps/bio/software/anaconda2/envs/TaxProfiler/bin/python /medstore/Development/Metagenomics/TaxProfiler/TestSamples_FromMicro/TaxprofilerRun/Scripts/Taxprofiler-Metagenomics/Scripts/ParserScripts/ParseKraken2.py --Taxprofiler_out ${Taxprofiler_out_p} --DepthTresh ${DepthTresh_p}
+	/apps/bio/software/anaconda2/envs/TaxProfiler/bin/python /medstore/Development/Metagenomics/TaxProfiler/TestSamples_FromMicro/TaxprofilerRun/Scripts/Taxprofiler-Metagenomics/Scripts/ParserScripts/ParseKraken2.py --Taxprofiler_out ${Taxprofiler_out_p} --DepthTresh ${DepthTresh_p} --Db_sheet ${dbsheet_p}
 
 	"""
 
@@ -101,6 +104,7 @@ process ParseKrakenUniq {
 	input:
 		val Taxprofiler_out_p
 		val DepthTresh_p
+		val dbsheet_p
 		
 	output:
 		path 'KrakenUniq', emit: KrakenUniq_outs
@@ -109,14 +113,14 @@ process ParseKrakenUniq {
 	if (params.IgnoreReadExtraction_krakenuniq)
 	"""
 
-	/apps/bio/software/anaconda2/envs/TaxProfiler/bin/python /medstore/Development/Metagenomics/TaxProfiler/TestSamples_FromMicro/TaxprofilerRun/Scripts/Taxprofiler-Metagenomics/Scripts/ParserScripts/ParseKrakenUniq.py --Taxprofiler_out ${Taxprofiler_out_p} --DepthTresh ${DepthTresh_p} --IgnoreReadExtraction
+	/apps/bio/software/anaconda2/envs/TaxProfiler/bin/python /medstore/Development/Metagenomics/TaxProfiler/TestSamples_FromMicro/TaxprofilerRun/Scripts/Taxprofiler-Metagenomics/Scripts/ParserScripts/ParseKrakenUniq.py --Taxprofiler_out ${Taxprofiler_out_p} --DepthTresh ${DepthTresh_p} --Db_sheet ${dbsheet_p} --IgnoreReadExtraction
 
 	"""		
 
 	else
 	"""
 
-	/apps/bio/software/anaconda2/envs/TaxProfiler/bin/python /medstore/Development/Metagenomics/TaxProfiler/TestSamples_FromMicro/TaxprofilerRun/Scripts/Taxprofiler-Metagenomics/Scripts/ParserScripts/ParseKrakenUniq.py --Taxprofiler_out ${Taxprofiler_out_p} --DepthTresh ${DepthTresh_p} 
+	/apps/bio/software/anaconda2/envs/TaxProfiler/bin/python /medstore/Development/Metagenomics/TaxProfiler/TestSamples_FromMicro/TaxprofilerRun/Scripts/Taxprofiler-Metagenomics/Scripts/ParserScripts/ParseKrakenUniq.py --Taxprofiler_out ${Taxprofiler_out_p} --DepthTresh ${DepthTresh_p} --Db_sheet ${dbsheet_p} 
 
 	"""		
 
@@ -132,7 +136,7 @@ process ParseDiamond {
 		val Taxprofiler_out_p
 		val DepthTresh_p
 		val TaxDump_gz_p
-	
+		val dbsheet_p
 		
 	output:
 		path 'Diamond', emit: Diamond_outs
@@ -140,14 +144,14 @@ process ParseDiamond {
 	script:
 	if (params.IgnoreReadExtraction_Diamond)
 	"""
-	/apps/bio/software/anaconda2/envs/TaxProfiler/bin/python /medstore/Development/Metagenomics/TaxProfiler/TestSamples_FromMicro/TaxprofilerRun/Scripts/Taxprofiler-Metagenomics/Scripts/ParserScripts/ParseDiamond.py --Taxprofiler_out ${Taxprofiler_out_p} --DepthTresh ${DepthTresh_p} --taxdumpfile ${TaxDump_gz_p} --IgnoreReadExtraction
+	/apps/bio/software/anaconda2/envs/TaxProfiler/bin/python /medstore/Development/Metagenomics/TaxProfiler/TestSamples_FromMicro/TaxprofilerRun/Scripts/Taxprofiler-Metagenomics/Scripts/ParserScripts/ParseDiamond.py --Taxprofiler_out ${Taxprofiler_out_p} --DepthTresh ${DepthTresh_p} --Db_sheet ${dbsheet_p} --taxdumpfile ${TaxDump_gz_p} --IgnoreReadExtraction
 	"""
 	
 	else 
 
 	"""
 
-	/apps/bio/software/anaconda2/envs/TaxProfiler/bin/python /medstore/Development/Metagenomics/TaxProfiler/TestSamples_FromMicro/TaxprofilerRun/Scripts/Taxprofiler-Metagenomics/Scripts/ParserScripts/ParseDiamond.py --Taxprofiler_out ${Taxprofiler_out_p} --DepthTresh ${DepthTresh_p} --taxdumpfile ${TaxDump_gz_p}
+	/apps/bio/software/anaconda2/envs/TaxProfiler/bin/python /medstore/Development/Metagenomics/TaxProfiler/TestSamples_FromMicro/TaxprofilerRun/Scripts/Taxprofiler-Metagenomics/Scripts/ParserScripts/ParseDiamond.py --Taxprofiler_out ${Taxprofiler_out_p} --DepthTresh ${DepthTresh_p} --taxdumpfile ${TaxDump_gz_p} --Db_sheet ${dbsheet_p}
 
 	"""		
 
@@ -186,12 +190,12 @@ process ParseExcel {
 		val KrakenUniq_outs
 		
 	output:
-		path 'Diamond', emit: Diamond_outs
+		path 'Out_ParsedExcel.xlsx', emit: ExcelOut
 
 	script:
 	"""
 
-	/apps/bio/software/anaconda2/envs/TaxProfiler/bin/python /medstore/Development/Metagenomics/TaxProfiler/TestSamples_FromMicro/TaxprofilerRun/Scripts/Taxprofiler-Metagenomics/Scripts/ParserScripts/WriteExcel.py --Tools ${Diamond_outs} ${Kraken2_outs} ${Metaphlan4_outs} ${Ganon_outs}
+	/apps/bio/software/anaconda2/envs/TaxProfiler/bin/python /medstore/Development/Metagenomics/TaxProfiler/TestSamples_FromMicro/TaxprofilerRun/Scripts/Taxprofiler-Metagenomics/Scripts/ParserScripts/WriteExcel.py --Tools ${Diamond_outs} ${Kraken2_outs} ${KrakenUniq_outs}
 
 	"""		
 
@@ -208,14 +212,17 @@ workflow {
 	params.TaxDump_gz=''
 	TaxDump_gz_p=Channel.from(params.TaxDump_gz)
 
+	params.dbsheet=''
+	dbsheet_p=Channel.from(params.dbsheet)
+
 
 	//--- Workflow --- 
 	//ParseMetaPhlan4(Taxprofiler_out_p, DepthTresh_p)
-	ParseKraken2(Taxprofiler_out_p, DepthTresh_p)
+	ParseKraken2(Taxprofiler_out_p, DepthTresh_p, dbsheet_p)
 	// Turning of krakenuniq for now, it is to memory heavy 
-	ParseKrakenUniq(Taxprofiler_out_p, DepthTresh_p) 
-	ParseDiamond(Taxprofiler_out_p, DepthTresh_p, TaxDump_gz_p)
+	ParseKrakenUniq(Taxprofiler_out_p, DepthTresh_p, dbsheet_p) 
+	ParseDiamond(Taxprofiler_out_p, DepthTresh_p, TaxDump_gz_p, dbsheet_p)
 	// Ganon is just for tester here as well, we might need to remove it also! 
 	//ParseGanon(Taxprofiler_out_p, DepthTresh_p)
-	//ParseExcel(ParseDiamond.out.Diamond_outs, ParseKraken2.out.Kraken2_outs)
+	ParseExcel(ParseDiamond.out.Diamond_outs, ParseKraken2.out.Kraken2_outs, ParseKrakenUniq.out.KrakenUniq_outs)
 }
