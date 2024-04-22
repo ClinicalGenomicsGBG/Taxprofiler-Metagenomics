@@ -53,7 +53,8 @@ def ParseDiamond(taxprofdict, taxdump, dptresh,dbsheet, IgnoreReadExtraction):
     
     # We need to 
     
-    ncbi = NCBITaxa(taxdump_file=taxdump, dbfile=f'{tmp}/taxa.sqlite', update=False)
+    #ncbi = NCBITaxa(taxdump_file=taxdump, dbfile=f'{tmp}/taxa.sqlite', update=False)
+    ncbi = NCBITaxa(taxdump_file=taxdump, dbfile=f'{tmp}/taxa.sqlite')
     subfolders = [ f.path for f in os.scandir(taxprofdict) if f.is_dir() ]
     Fastqfiles=[]
     for i in subfolders:

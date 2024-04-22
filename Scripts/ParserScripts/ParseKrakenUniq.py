@@ -140,7 +140,7 @@ def ParseKrakenUniq(taxprofdict, dptresh, dbsheet, IgnoreReadExtraction):
                                             else:
                                                 specieswithReadnames[key].append(readname)
                             
-                        # Only for SE as it is now, PE is missing untill update from taxprofiler!
+                        # Issue, PE outputs fasta, SE outputs fastq that is name fa.
                         
                         fastaSE=f'{k}/{samplename}.classified.fasta.gz'
                         fastaPE=f'{k}/{samplename}.merged.classified.fasta.gz'

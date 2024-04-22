@@ -1,20 +1,40 @@
 
                                       #!/usr/bin/R
 
-library(pheatmap)
-library(dplyr)
-library(ggplot2)
-library(ggpubr)
-library(RColorBrewer)
-library(reshape2)
-library(gridExtra)
+suppressMessages(library(pheatmap))
+suppressMessages(library(dplyr))
+suppressMessages(library(ggplot2))
+suppressMessages(library(ggpubr))
+suppressMessages(library(RColorBrewer))
+suppressMessages(library(reshape2))
+suppressMessages(library(gridExtra))
+suppressMessages(library("optparse"))
+
 theme_set(theme_pubr())
 
-setwd("/medstore/Development/Metagenomics/TaxProfiler/TestSamples_FromMicro/TaxprofilerRun/Scripts/Taxprofiler-Metagenomics/Scripts/Plotting/")
 
 options(pillar.subtle=FALSE) # To fix the dark background when printing the error message
 options(rlang_backtrace_on_error = "none") # Bowth are important for the dark background!
 
+
+
+
+option_list = list(
+  make_option(c("-m", "--metafile"), type="character", default=NULL, 
+              help="Metadata file tab delimited, Diamond Diamond_Linkage Kraken2 Kraken2_Linkage KrakenUniq KrakenUniq_Linkage (Diamond means path to _CountsForplotting.txt, Diamond_Linkage means path to _SpeciesDomainLinkage.txt)", metavar="character")
+); 
+
+
+opt_parser = OptionParser(option_list=option_list);
+opt = parse_args(opt_parser);
+
+
+
+
+if (is.null(opt$metafile)){
+  print_help(opt_parser)
+  stop("Missing metadata file", call.=FALSE)
+}
 
 # To be able to include groups that are not there
 scale_fill_own <- function(...){
@@ -29,6 +49,8 @@ scale_fill_own <- function(...){
 # the order of the species is based on the normalized sum of species. Top 1 is the species with the highest normalized counts sum (sum of all tools)
 
 list.files()
+
+
 
 metadata<-read.table("Metadata_Validation_run1_All.txt", header=T)
 
