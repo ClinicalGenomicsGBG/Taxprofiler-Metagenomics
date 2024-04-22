@@ -67,7 +67,7 @@ metaphlan,Metaphlan4,,/medstore/databases/taxprofiler/databases/Metaphlan4
 
 ```
 
-qsub /medstore/Development/Metagenomics/TaxProfiler/runTaxprofiler.sh <SampleSheet> <OutDir>
+qsub runTaxprofiler.sh <SampleSheet> <OutDir>
 
 ```
 
