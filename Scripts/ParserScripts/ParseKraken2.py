@@ -27,62 +27,95 @@ def parseArgs(argv):
     parser = argparse.ArgumentParser(description='Takes the output from taxprofiler and parses it')
     parser.add_argument("--Taxprofiler_out", dest = 'taxprofdict', required=True, help ="Output folder from taxprofiler (required)")
     parser.add_argument("--DepthTresh", dest = 'dptresh',default=10, type=int, help ="Minimum depth required to be reported (Default 10)")
+    parser.add_argument("--Db_sheet", dest = 'dbsheet', help ="Path to Database sheet")
     parser.add_argument("--IgnoreReadExtraction", dest = 'IgnoreReadExtraction',help ="If used the reads will not be extracted (Optional)", action='store_true')
     arguments = parser.parse_args(argv)
     return arguments
 
-
-
-def ParseKraken2(taxprofdict, dptresh, IgnoreReadExtraction):
+def ParseKraken2(taxprofdict, dptresh, dbsheet, IgnoreReadExtraction):
     """
     
     """
+    
+    # Extract name of the database from the database sheet
 
+    with open(dbsheet, "r") as db:
+        next(db)
+        for l in db:
+            l=l.strip()
+            tool="kraken2"
+            if tool in l.split(",")[0]:
+                krakdb=l.split(",")[1]    
+    
     print("Parsing Kraken2...")
-
-
     
     subfolders = [ f.path for f in os.scandir(taxprofdict) if f.is_dir() ]
-    tool="kraken2"
     Fastqfiles=[]
     Annotation={}
+
+
+    Leveldict={'U':'Unclassified', 'R':'Root', 'D':'Domain', 'K':'Kingdom','P':'Phylum', 'C':'Class', 'O':'Order', 'F':'Family', 'G':'Genus','S':'Species'}
+
     
     for i in subfolders:
         if tool in i: # We can extract reads using krak
             subfolders_2=[ f.path for f in os.scandir(i) if f.is_dir() ] # Check subfolders in kraken2 dir
             for k in subfolders_2:
-                if "Kraken2_" in k:
-                    krakdb=k.split("/")[-1]
+                if krakdb in k:
                     try:
                         os.mkdir("Kraken2")
                     except FileExistsError:
                         logging.info('%s\tFolder already exists', time.ctime())
+
+                    try:
+                        os.mkdir("Kraken2/Extras")
+                    except FileExistsError:
+                        logging.info('%s\tFolder already exists', time.ctime())
+                
                     reports=glob.glob(k+"/*.report.txt")
-                    for r in reports: # Looping through the reports! 
+                    for r in reports: # Looping through the reports!
                         speciesStrainAnno={} # To keep the species annotation and info if there is a strain annotation, we use this when we extract the detected reads from classified report
                         SpeciesCounts={}
                         samplename=r.split(".kraken2.kraken2.report.txt")[0].split("/")[-1]                    
-                        outforplot="Kraken2/"+samplename+"_CountsForplotting.txt"
-                        
-                        with open(r, "r") as report, open(outforplot, "w") as o:
+                        outforplot=f'Kraken2/{samplename}_CountsForplotting.txt'
+                        outforplot_discaredSpecies=f'Kraken2/Extras/{samplename}_CountsForplotting_DiscaredSpecies.txt' # Species we remove when we are at lower treshold
+                        outforplot_extras=f'Kraken2/Extras/{samplename}_CountsForplotting_Others.txt' # Groups removed above species
+                        SpeciesDomainLinkage=f'Kraken2/Extras/{samplename}_SpeciesDomainLinkage.txt'
+                        with open(r, "r") as report, open(outforplot, "w") as o, open(outforplot_discaredSpecies, "w") as o_discardedSpecies, open(outforplot_extras, "w") as o_discarded_extras, open(SpeciesDomainLinkage, "w") as o_SpeciesDomainLinkage:
                             print("TaxID\tSpecies\tCounts", file=o)
+                            print("TaxID\tSpecies\tCounts", file=o_discardedSpecies)
+                            print("TaxID\tTaxname\tLineage\tCounts", file=o_discarded_extras)
+                            print("TaxID\tTaxname\tDomain", file=o_SpeciesDomainLinkage)
                             for l in report:
                                 l=l.strip()
                                 taxnr=l.split("\t")[4]
                                 counts=int(l.split("\t")[1])
                                 taxlevel=l.split("\t")[3]
                                 taxname=l.split("\t")[5].lstrip()
+
                                 if taxlevel=="S":
                                     speciesTresh=counts
                                     if counts >= dptresh: # If our taxlevel is species
-                                        print(str(taxnr)+"\t"+taxname+"\t"+str(counts), file=o)
+                                        print(f'{taxnr}\t{taxname}\t{counts}', file=o)
+                                        print(f'{taxnr}\t{taxname}\t{CurrentLineage}', file=o_SpeciesDomainLinkage)
                                         speciesStrainAnno[taxname]=[taxnr]
                                         speciesLinkedTostrain=taxname # We save this as we can link the strains to this species
                                         SpeciesCounts[taxname]=counts
+                                    else: # We are at species but we are not reaching the treshold
+                                        #print(str(taxnr)+"\t"+taxname+"\t"+str(counts), file=o_discardedSpecies)
+                                        print(f'{taxnr}\t{taxname}\t{counts}', file=o_discardedSpecies)
+                                        
                                         
                                 elif re.findall(r'(S(\w)+)',taxlevel): # If there is something after S, these are after the  strain string
                                     if speciesTresh >= dptresh: # We need to make sure that the species treshold is more than or equal to the depthtreshold, if the species is ok we append the strains if they are there!
                                         speciesStrainAnno[speciesLinkedTostrain].append(taxnr)
+                                else: # We are not as species level, But in discarded others, higher tax levels! Here we also take the domian, and set to current lineage, this works as D is always over the incremented species level
+                                    if taxlevel in Leveldict.keys():
+                                        Lineage=Leveldict[taxlevel]
+                                        print(f'{taxnr}\t{taxname}\t{Lineage}\t{counts}', file=o_discarded_extras)
+                                        if taxlevel == "D":
+                                            CurrentLineage=taxname
+                                            print(CurrentLineage)
 
                         if "_pe_" in r: # We have the PE flag added by taxprofiler, this was run in Paired END mode!
                             R1=k+"/"+samplename+".kraken2.classified_1.fastq.gz"
@@ -162,11 +195,11 @@ def ParseKraken2(taxprofdict, dptresh, IgnoreReadExtraction):
 
 
                                     
-def main(taxprofdict, dptresh, IgnoreReadExtraction):
-    ParseKraken2(taxprofdict, dptresh, IgnoreReadExtraction)
+def main(taxprofdict, dptresh, dbsheet, IgnoreReadExtraction):
+    ParseKraken2(taxprofdict, dptresh, dbsheet, IgnoreReadExtraction)
     
     
 if __name__ == '__main__':
     args=parseArgs(sys.argv[1:])
-    main(args.taxprofdict, args.dptresh, args.IgnoreReadExtraction)
+    main(args.taxprofdict, args.dptresh, args.dbsheet, args.IgnoreReadExtraction)
 
