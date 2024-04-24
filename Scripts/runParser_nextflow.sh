@@ -18,5 +18,5 @@ ParsingOutputFolder=$2
 
 source /medstore/Development/Metagenomics/TaxProfiler/Taxprofiler-Metagenomics/configs/Bash_Config_Taxprofiler.config
 
-nextflow run /medstore/Development/Metagenomics/TaxProfiler/Taxprofiler-Metagenomics/Scripts/ParseTaxprofiler.nf --Taxprofiler_out ${TaxprofilerOutputFolder} --OutputDir ${ParsingOutputFolder} --TaxDump_gz ${taxdumpgz} --DepthTresh ${DepthTresh} -c /medstore/Development/Metagenomics/TaxProfiler/Taxprofiler-Metagenomics/configs/Mandalore_Taxprofiler.config
+nextflow run /medstore/Development/Metagenomics/TaxProfiler/Taxprofiler-Metagenomics/Scripts/ParseTaxprofiler.nf --Taxprofiler_out ${TaxprofilerOutputFolder} --OutputDir ${ParsingOutputFolder} --TaxDump_gz ${taxdumpgz} --DepthTresh ${DepthTresh} --dbsheet ${DatabaseSheet} -c /medstore/Development/Metagenomics/TaxProfiler/Taxprofiler-Metagenomics/configs/Mandalore_Taxprofiler.config
 
