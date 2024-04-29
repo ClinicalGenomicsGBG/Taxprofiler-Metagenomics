@@ -1,5 +1,5 @@
 process PARSEKRAKEN2 {
-	publishDir params.OutputDir,mode: 'copy', overwrite: true
+	publishDir "${params.OutputDir}/Taxprofiler_Parsed", mode: 'copy', overwrite: true
        	label "single_thread"
 
 	module 'miniconda/4.14.0'
