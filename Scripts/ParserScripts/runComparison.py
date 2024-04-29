@@ -65,50 +65,39 @@ def ReadMetadata(metadata):
 def readCountTables(parsedFolder, comparisons):
 
     subfolders = [ f.path for f in os.scandir(parsedFolder) if f.is_dir() ]
-
-
     outExcel="Comparisons.xlsx"
     writer=pd.ExcelWriter(outExcel, engine='xlsxwriter')
-
-
-    print(comparisons)
     
     for f in subfolders:
         tool=f.split("/")[-1]
         countfiles=glob.glob(f+"/*_CountsForplotting.txt")
         #counter=0
 
-        Type=['RNA','DNA']
+        AllPossibleTypes=['RNA','DNA']
+
+        Type=[]
+        
+        for t in list(comparisons.keys()): # Check for if we have only RNA or only DNA
+            if t in AllPossibleTypes:
+                Type.append(t)
 
         for t in Type:
             counter=0
             for c in countfiles:
-            
-                #counter=0
-                #sample=c.split("/")[-1].split("_CountsForplotting.txt")[0]
-
                 if "_se_" in c: 
-                    sample=c.split("/")[-1].split("_se_")[0]
+                    sample=c.split("/")[-1].split("_se_")[0] # Splitting like this and you remove run id! 
                 elif "_pe_" in c:
-                    sample=c.split("/")[-1].split("_pe_")[0]
-                else: # KrakenUniq has _RNA_CountsForplotting.txt or _DNA_CountsForplotting.txt, now... 
+                    sample=c.split("/")[-1].split("_pe_")[0] # Splitting like this and you remove run id!
+                else: # KrakenUniq has _RNA_CountsForplotting.txt or _DNA_CountsForplotting.txt, now... It only has that 
                     if "_RNA_CountsForplotting.txt" in c.split("/")[-1]:
                         sample=c.split("/")[-1].split("_RNA_CountsForplotting.txt")[0]
                     elif "_DNA_CountsForplotting.txt" in c.split("/")[-1]:
                         sample=c.split("/")[-1].split("_DNA_CountsForplotting.txt")[0]
-                    else:
+                    else: # We have named it something else, but we dont know the run id!
                         sample=c.split("/")[-1].split("_CountsForplotting.txt")[0]
-                        
-                #print(sample, comparisons[t])
+                        sample = "\t".join(sample.rsplit("_", 1)).split("\t")[0] # Remove everything after the last occurence of _
                 if sample in [x for xs in comparisons[t] for x in xs]: # Flatten the list
-                    
-                    counter+=1
-
-                    #print(sample, tool, counter)
-                    
-                    #sample=c.split("/")[-1].split("_CountsForplotting.txt")[0]
-                    #norm=sample+"_norm"            
-            
+                    counter+=1            
                     if counter==1: # first df
                         df=pd.read_table(c, index_col=None, header=0)
                         df.columns=['TaxID','Species',sample]                
@@ -116,38 +105,31 @@ def readCountTables(parsedFolder, comparisons):
                         df2=pd.read_table(c, index_col=None, header=0)
                         df2.columns=['TaxID','Species',sample]
                         df=df.merge(df2, left_on=['TaxID','Species'], right_on=['TaxID','Species'], how='outer')
-
-            #print(df)
+            
             df.fillna(0, inplace=True)
-        
             df[df.columns[2:]]=df[df.columns[2:]]+1
-
+            
             for sample in df.columns[2:]:
                 norm=sample+"_norm"
                 df[norm]=df[sample]/df[sample].sum()
                 df[sample]=df[sample]-1 # Remove the pseudocount from the table!
             
             normalizedcolumns=[col for col in df.columns if col.endswith('_norm')]
-
-            #print(t,tool, normalizedcolumns)
-
-            #print(comparisons[t])
-
             # Write the excel report
             
             sheet=t+"_"+tool
             Controls=comparisons[t][0]
             Patients=comparisons[t][1]
             subsetdf=df[['TaxID','Species']].copy()
-
-            print(Controls, Patients)
-
+            
             for p in Patients:
                 for c in Controls:
                     patientcolumns_both=[col for col in df.columns if p in col]
                     controlcolumns_both=[col for col in df.columns if c in col]
                     patientcolumn_norm=[col for col in normalizedcolumns if p in col]
                     controlcolumn_norm=[col for col in normalizedcolumns if c in col]
+                    
+                    
                     if len(patientcolumn_norm) == 1 and len(controlcolumn_norm) == 1:
                         patientcolumn=patientcolumn_norm[0]
                         controlcolumn=controlcolumn_norm[0]
@@ -162,6 +144,7 @@ def readCountTables(parsedFolder, comparisons):
             norm=[]
             fold=[]
 
+            
             # Reporder so first is the raw values, next if the normalized values and last is the foldchange
             
             for s in subsetdf.columns:
@@ -174,6 +157,7 @@ def readCountTables(parsedFolder, comparisons):
 
             ordered=raw+norm+fold     
             subsetdf=subsetdf[ordered]
+
             subsetdf.to_excel(writer, sheet_name=sheet, index=False)
 
 
