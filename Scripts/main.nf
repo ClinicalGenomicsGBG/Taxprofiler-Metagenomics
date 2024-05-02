@@ -34,7 +34,8 @@ params.help=false
 params.IgnoreReadExtraction_Diamond=false
 params.IgnoreReadExtraction_kraken2=false
 params.IgnoreReadExtraction_krakenuniq=false
-params.Metadata='/medstore/Development/Metagenomics/TaxProfiler/Taxprofiler-Metagenomics/misc/NO_FILE'
+//params.Metadata='/medstore/Development/Metagenomics/TaxProfiler/Taxprofiler-Metagenomics/misc/NO_FILE'
+params.Metadata=false
 
 if (params.help){
    helpMessage()
@@ -55,8 +56,10 @@ taxdumpgz_c=Channel.from(params.taxdumpgz)
 hostindex_c=Channel.from(params.hostindex)
 hostfasta_c=Channel.from(params.hostfasta)
 DepthTresh_c=Channel.from(params.DepthTresh)
-Metadata_c=Channel.from(params.Metadata)
 
+if (params.Metadata){
+   Metadata_c=Channel.from(params.Metadata)
+}
 
 include {TAXPROFILER}	from	'./modules/Taxprofiler.nf'
 include {PARSEKRAKEN2}	from	'./modules/ParseKraken2.nf'
@@ -78,7 +81,9 @@ workflow {
 	 PARSEDIAMOND(TAXPROFILER.out.Taxprofiler_out, DepthTresh_c, DatabaseSheet_c, taxdumpgz_c)
 	 PARSEKRAKENUNIQ(TAXPROFILER.out.Taxprofiler_out, DepthTresh_c, DatabaseSheet_c)
 	 PARSEEXCEL(PARSEDIAMOND.out.Diamond_outs, PARSEKRAKEN2.out.Kraken2_outs, PARSEKRAKENUNIQ.out.KrakenUniq_outs)
-	 COMPARISONS(PARSEDIAMOND.out.Diamond_outs, PARSEKRAKEN2.out.Kraken2_outs, PARSEKRAKENUNIQ.out.KrakenUniq_outs, Metadata_c)
+	 
+	 if (params.Metadata){
+	 COMPARISONS(PARSEDIAMOND.out.Diamond_outs, PARSEKRAKEN2.out.Kraken2_outs, PARSEKRAKENUNIQ.out.KrakenUniq_outs, Metadata_c)}
 }
 
 

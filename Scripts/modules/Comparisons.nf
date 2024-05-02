@@ -15,7 +15,6 @@ process COMPARISONS {
 
 	script:
 	
-	//def filter = Metadata_c.name != 'NO_FILE':
 	"""
 	
 	source activate TaxProfiler
@@ -24,4 +23,5 @@ process COMPARISONS {
 
 	"""		
 }
+
 
