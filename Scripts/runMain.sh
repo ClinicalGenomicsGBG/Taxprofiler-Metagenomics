@@ -14,6 +14,6 @@ set -x
 
 #nextflow /medstore/Development/Metagenomics/TaxProfiler/Taxprofiler-Metagenomics/Scripts/main.nf --OutputDir test --SampleSheet $1 -c /medstore/Development/Metagenomics/TaxProfiler/Taxprofiler-Metagenomics/configs/Mandalore_Taxprofiler_mod.config --IgnoreReadExtraction_krakenuniq --Metadata /medstore/Development/Metagenomics/TaxProfiler/InsilicoTester_SE/metadata.csv -resume 
 
-nextflow /medstore/Development/Metagenomics/TaxProfiler/Taxprofiler-Metagenomics/Scripts/main.nf --OutputDir test --SampleSheet $1 -c /medstore/Development/Metagenomics/TaxProfiler/Taxprofiler-Metagenomics/configs/Mandalore_Taxprofiler_mod.config --IgnoreReadExtraction_krakenuniq -resume 
+nextflow /medstore/Development/Metagenomics/TaxProfiler/Taxprofiler-Metagenomics/Scripts/main.nf -N sanna.abrahamsson@gu.se --OutputDir test --SampleSheet $1 -c /medstore/Development/Metagenomics/TaxProfiler/Taxprofiler-Metagenomics/configs/Mandalore_Taxprofiler_mod.config --IgnoreReadExtraction_krakenuniq --Webstore --Webstore_mail -resume 
 
 

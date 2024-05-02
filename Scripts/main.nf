@@ -23,6 +23,8 @@ def helpMessage(){
              --IgnoreReadExtraction_kraken2	Ignore extracting the reads from kraken2 classification
              --IgnoreReadExtraction_krakenuniq	Ignore extracting the reads from krakenuniq, this is pending to be fixed
 	     --Metadata				Path to metadata file required for comparison patient vs control. csv file with metadata, Sample (samplename), Type (DNA or RNA), Group (P (patient) or C (control)
+	     --Webstore				Use flag if the results should be transferred to webstore
+	     --Webstore_mail			Use together with webstore flag if a mail should be sent after completed transfer
              --help   This usage statement
 
 
@@ -34,8 +36,10 @@ params.help=false
 params.IgnoreReadExtraction_Diamond=false
 params.IgnoreReadExtraction_kraken2=false
 params.IgnoreReadExtraction_krakenuniq=false
-//params.Metadata='/medstore/Development/Metagenomics/TaxProfiler/Taxprofiler-Metagenomics/misc/NO_FILE'
 params.Metadata=false
+params.Webstore=false
+params.Webstore_mail=false
+params.dummycomparison='did not run'
 
 if (params.help){
    helpMessage()
@@ -67,13 +71,12 @@ include {PARSEDIAMOND}	from	'./modules/ParseDiamond.nf'
 include {PARSEKRAKENUNIQ}	from	'./modules/ParseKrakenUniq.nf'
 include {PARSEEXCEL}	from	'./modules/ParseExcel.nf'
 include {COMPARISONS}	from	'./modules/Comparisons.nf'
+include {COLLATE}	from	'./modules/CollateResults.nf'
 
 //------------------------------WorkFlow-Parameters--------------------------------------------------
 
 
-
 workflow {
-
 	 // Workflow
 	 TAXPROFILER(hostindex_c, hostfasta_c, SampleSheet_c, DatabaseSheet_c, MandaloreConfig_c)
 	 // ParseKraken2
@@ -81,9 +84,16 @@ workflow {
 	 PARSEDIAMOND(TAXPROFILER.out.Taxprofiler_out, DepthTresh_c, DatabaseSheet_c, taxdumpgz_c)
 	 PARSEKRAKENUNIQ(TAXPROFILER.out.Taxprofiler_out, DepthTresh_c, DatabaseSheet_c)
 	 PARSEEXCEL(PARSEDIAMOND.out.Diamond_outs, PARSEKRAKEN2.out.Kraken2_outs, PARSEKRAKENUNIQ.out.KrakenUniq_outs)
-	 
+	 // Optional to add comparison
 	 if (params.Metadata){
-	 COMPARISONS(PARSEDIAMOND.out.Diamond_outs, PARSEKRAKEN2.out.Kraken2_outs, PARSEKRAKENUNIQ.out.KrakenUniq_outs, Metadata_c)}
-}
-
-
+	    COMPARISONS(PARSEDIAMOND.out.Diamond_outs, PARSEKRAKEN2.out.Kraken2_outs, PARSEKRAKENUNIQ.out.KrakenUniq_outs, Metadata_c)
+	    }
+	  // Copy to webstore without the comparison done
+	 if (params.Webstore){
+	    if (params.Metadata){
+	    // Collate after the comparison is done
+	    COLLATE(PARSEEXCEL.out.ExcelOut, COMPARISONS.out.comparisons)
+	    }
+	    else {
+	    COLLATE(PARSEEXCEL.out.ExcelOut,params.dummycomparison)
+	    }}}
