@@ -16,6 +16,10 @@ import sys
 import time
 import xlsxwriter
 
+# Turning off the performance warnings, might want to fix this later! 
+from warnings import simplefilter 
+simplefilter(action="ignore", category=pd.errors.PerformanceWarning)
+
 
 def parseArgs(argv):
     '''
@@ -82,19 +86,39 @@ def SummarizeInExcel(Tools):
             dfMerged[col]=dfMerged[col].astype(int) # Convert from float to int, will be float as we introduced NAs in the merging
 
 
+        # Move TaxID and species to first and second column!
+        # Spits out performance warnings, fix that!
+        
+        #column_to_move = dfMerged.pop("Species")
+        
+        #dfMerged.insert(0, "Species", column_to_move)
+        #column_to_move = dfMerged.pop("TaxID")
+        #dfMerged.insert(0, "TaxID", column_to_move)
+
+        dfMerged.insert(0, 'Species', dfMerged.pop('Species'))
+        dfMerged.insert(0, 'TaxID', dfMerged.pop('TaxID'))
+        
+        #print(columns.index('TaxID'))
+        #print(columns.index('Species'))
+
+        #df2 = dfMerged[['TaxID', 'Species']].copy()
+        #dfMerged=dfMerged.drop(['TaxID', 'Species'], axis=1)
+        #dfMerged=pd.concat([df2,dfMerged], axis=1)
+
+        
+        #dfMerged=pd.concat([column_to_move,dfMerged.insert], axis=1)
+        
         # Add normalization to the excel sheet also 
 
         for sample in dfMerged.columns[2:]:
             norm=f'{sample}_Percent'
-            #print(len(dfMerged))
-            dfMerged[norm]=(dfMerged[sample]+1)/(dfMerged[sample].sum()+len(dfMerged))*100 # Add a pseudocount to all sample and add the amount of rows to the sum 
+            #dfMerged[norm]=(dfMerged[sample]+1)/(dfMerged[sample].sum()+len(dfMerged))*100 # Add a pseudocount to all sample and add the amount of rows to the sum
             dfMerged[norm]=dfMerged[sample]/dfMerged[sample].sum()*100
             
         dfMerged_kingdom=dfMerged.merge(Mapping_df, how='left', on=['TaxID','Species']) # Merge with kingdom
         dfMerged_kingdom.drop_duplicates(subset=['TaxID'], keep='first', inplace=True, ignore_index=True) # Drop the duplicated rows from the merge!
 
         #print(dfMerged_kingdom)
-        
         
         Archaea=dfMerged_kingdom[dfMerged_kingdom['Kingdom']=='Archaea']
         Archaea=Archaea.drop(columns=['Kingdom'])
@@ -119,7 +143,7 @@ def SummarizeInExcel(Tools):
         if Archaea.shape[0] > 1:
             Archaea.reset_index(inplace=True)
             header = [{'header': di} for di in Archaea.columns.tolist()]
-            worksheet.add_table(row, col, Archaea.shape[0], Archaea.shape[1]-1,{'header_row': True,'first_column': True,'columns':header})
+            worksheet.add_table(row, col, Archaea.shape[0], Archaea.shape[1]-1,{'header_row': True,'first_column': True,'columns':header, 'style': 'Table Style Medium 15'})
 
         col+=2+dimBacteria
         Bacteria.to_excel(writer, sheet_name=tool,  startrow=row, startcol=col, index=True)
@@ -127,7 +151,7 @@ def SummarizeInExcel(Tools):
         if Bacteria.shape[0] >1: 
             Bacteria.reset_index(inplace=True)
             header = [{'header': di} for di in Bacteria.columns.tolist()]
-            worksheet.add_table(row, col, Bacteria.shape[0], col+Bacteria.shape[1]-1,{'header_row': True,'first_column': True,'columns':header})        
+            worksheet.add_table(row, col, Bacteria.shape[0], col+Bacteria.shape[1]-1,{'header_row': True,'first_column': True,'columns':header, 'style': 'Table Style Medium 15'})        
         
         col+=2+dimEukaryota
         Eukaryota.to_excel(writer, sheet_name=tool,  startrow=row, startcol=col, index=True)
@@ -143,9 +167,8 @@ def SummarizeInExcel(Tools):
         if Viral.shape[0] > 1: 
             Viral.reset_index(inplace=True)
             header = [{'header': di} for di in Viral.columns.tolist()]
-            worksheet.add_table(row, col, Viral.shape[0], col+Viral.shape[1]-1,{'header_row': True,'first_column': True,'columns':header})
-        
-        
+            worksheet.add_table(row, col, Viral.shape[0], col+Viral.shape[1]-1,{'header_row': True,'first_column': True,'columns':header, 'style': 'Table Style Medium 15'})
+            
         dfMerged.to_excel(writer, sheet_name=f'{tool}_raw')
 
     writer.close()
