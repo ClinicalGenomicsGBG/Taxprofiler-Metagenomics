@@ -46,6 +46,7 @@ def SummarizeInExcel(Tools):
     Countfiles={}
     Mapping={}
     for tool in Tools:
+        tool=tool.split("/")[-1]
         detec=[]
         Countfiles[tool]=[]
         countstoplot=glob.glob(tool+"/*_CountsForplotting.txt")
@@ -65,7 +66,8 @@ def SummarizeInExcel(Tools):
                     kingdom=l.split("\t")[2]
                     if not taxid in detec:
                         Mapping[tool].append([taxid, species, kingdom])
-                    
+
+    print(Mapping.keys())
         
     for folder, files in Countfiles.items():
         tool=folder.split("/")[-1]
