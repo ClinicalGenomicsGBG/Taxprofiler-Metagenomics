@@ -97,3 +97,16 @@ workflow {
 	    else {
 	    COLLATE(PARSEEXCEL.out.ExcelOut,params.dummycomparison)
 	    }}}
+
+workflow.onComplete {
+
+   output:
+   stdout
+
+   """
+
+   printl "???"> /medstore/Development/Metagenomics/TaxProfiler/InsilicoTester_SE/execution.txt
+   
+   """
+
+}
