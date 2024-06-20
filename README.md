@@ -39,15 +39,31 @@ nextflow pull nf-core/taxprofiler
 
 1. Generate your $SampleSheet, comma separated containing the following metadata (SampleSheeet_Taxprofiler.csv)
 
-Example below:
+Example below (illimuna):
 
 ```
 
 sample,run_accession,instrument_platform,fastq_1,fastq_2,fasta
-Sample1,Run1,ILLUMINA,/path/to/Sample1.R1.fastq.gz,/path/to/Sample1.R2.fastq.gz,
+Sample1,RNA,ILLUMINA,/path/to/Sample1.R1.fastq.gz,/path/to/Sample1.R2.fastq.gz,
+Sample2,RNA,ILLUMINA,/path/to/Sample2.R1.fastq.gz,/path/to/Sample2.R2.fastq.gz,
+Sample3,DNA,ILLUMINA,/path/to/Sample3.R1.fastq.gz,/path/to/Sample3.R2.fastq.gz,
+Sample4,DNA,ILLUMINA,/path/to/Sample4.R1.fastq.gz,/path/to/Sample4.R2.fastq.gz,
+
 
 ```
 
+Example below (iontorrent):
+
+
+```
+
+sample,run_accession,instrument_platform,fastq_1,fastq_2,fasta
+Sample1,RNA,ION_TORRENT,/path/to/Sample1.fastq.gz,,
+Sample2,RNA,ION_TORRENT,/path/to/Sample2.fastq.gz,,
+Sample3,DNA,ION_TORRENT,/path/to/Sample3.fastq.gz,,
+Sample4,DNA,ION_TORRENT,/path/to/Sample4.fastq.gz,,
+
+```
 
 2. (*Optional*) Database is already set but if you want to change it generate your $DatabaseSheet, comma seperated containing the paths to the databases you want to include.
 
@@ -60,24 +76,75 @@ metaphlan,Metaphlan4,,/medstore/databases/taxprofiler/databases/Metaphlan4
 
 ```
 
-3. Submit with qsub
+3. (*Optional*) When comparisons are necessary
 
-(Make sure that the paths to the configs and database files are correct first) 
+When there are clinical samples the hospital wants to run the patient against a control (this one usually contains a high amount of EBV). To be able to run the comparison module for the parser you need to add a metadata file. This file need to have have the following format.
+
+```
+Sample,Type,Group
+Sample1,RNA,P
+Sample2,RNA,C
+Sample3,DNA,P
+Sample4,DNA,C
+
+```
+
+* Sample name as the fastq file, remove the *fastq.gz extension.
+* The type is either RNA or DNA.
+* The group where P stands for Patient and C stands for Control.
+
+The comparisons are made pairwise, All RNA P will be tested against all RNA C. 
+
+4. Submit with qsub
+
+The main script runs taxprofiler (with the classifiers Diamond, Kraken2 and Krakenuniq), When this is done it runs the parser. If the user included the Metadata with the metadataflag you run the comparisons.
+
+```
+
+#!/bin/bash -l
+
+#$ -N Taxprofiler_TestClinical
+#$ -j y
+#$ -cwd
+#$ -pe mpi 1
+#$ -q development.q
+
+module load miniconda/4.14.0
+source activate TaxProfiler
+module load singularity/v3.5.2
+
+set -x
+
+SampleSheet=/path/to/samplesheet.csv # Change here
+outDir=TaxProfiler_out
+
+Config=/medstore/Development/Metagenomics/TaxProfiler/Taxprofiler-Metagenomics/configs/Mandalore_Taxprofiler_mod.config
+
+nextflow run /medstore/Development/Metagenomics/TaxProfiler/Taxprofiler-Metagenomics/Scripts/main.nf --OutputDir $outDir --SampleSheet $SampleSheet -c $Config --IgnoreReadExtraction_krakenuniq --Metadata /path/to/metadata.csv # change here
 
 
 ```
 
-qsub runTaxprofiler.sh <SampleSheet> <OutDir>
+run it with following: 
 
 ```
 
-4. When Taxprofiler is done and you want to extract the reads and generate count tables. *Important* Need to include the entire path to the Taxprofiler output directory! 
+qsub runTaxprofiler.sh
 
 ```
 
-qsub runParser_nextflow.sh <Full/Path/To/TaxprofilerOutPutDir> <ParserOutputDir>
 
-```
+## About the outputs
+
+The counts are extracted at species level, the counts are normalized by using a pseudocount, dividing by the total sum in the samplem take the fraction times 100. This will result in percentage of the total. 
+
+* TaxProfiler_out: Main folder output from taxprofiler
+* Taxprofiler_Parsed: Intermediates like count files and reads from the parser.  
+* excel sheet: Out_ParsedExcel.xlsx
+* Comparisons: (if user supplied the Metadata flag) Comparisons.xlsx
+
+
+
 
 ## Setting up the server config
 
@@ -88,6 +155,7 @@ We set the ```queueSize=20``` this means we are not allowing more then 20 proces
 
 Follow these instructions when it is time to update taxprofiler databases
 
+We are running the old databases now so ignore this, but the newer described here will be implemented during validation
 
 ## Diamond
 
