@@ -8,9 +8,18 @@ Taxprofiler and Parser on medstore
 
 # Instructions
 
+TaxProfiler is already installed in the conda environment TaxProfiler
 
-## Installation
+```
 
+module load miniconda/4.14.0
+
+source activate TaxProfiler
+
+```
+
+
+## Installation (Ignore if already installed and updated!)
 
 Load Taxprofiler environment using miniconda
 
@@ -22,12 +31,12 @@ source activate TaxProfiler
 
 ```
 
-Downlaod the newer version (tested on 1.1.2)
+Download the newer version (tested on 1.1.5)
 
 
 ```
 
-nf-core download taxprofiler -r 1.1.2
+nf-core download taxprofiler -r 1.1.5
 
 or 
 
@@ -65,7 +74,7 @@ Sample4,DNA,ION_TORRENT,/path/to/Sample4.fastq.gz,,
 
 ```
 
-2. (*Optional*) Database is already set but if you want to change it generate your $DatabaseSheet, comma seperated containing the paths to the databases you want to include.
+2. (*Optional*) Database is already set in the config file but if you want to change it generate your $DatabaseSheet, comma seperated containing the paths to the databases you want to include.
 
 ```
 tool,db_name,db_params,db_path
@@ -93,7 +102,7 @@ Sample4,DNA,C
 * The type is either RNA or DNA.
 * The group where P stands for Patient and C stands for Control.
 
-The comparisons are made pairwise, All RNA P will be tested against all RNA C. 
+The comparisons are made pairwise, All RNA P will be tested against all RNA C, one by one. No replicates with mean calculations. 
 
 4. Submit with qsub
 
@@ -129,7 +138,7 @@ run it with following:
 
 ```
 
-qsub runTaxprofiler.sh
+qsub runMain.sh
 
 ```
 
@@ -143,7 +152,10 @@ The counts are extracted at species level, the counts are normalized by using a 
 * excel sheet: Out_ParsedExcel.xlsx
 * Comparisons: (if user supplied the Metadata flag) Comparisons.xlsx
 
+5. Copy output to webstore
 
+Copy module to webstore is still ongoing, for now copy the files manually to ```/webstore/clinical/development/Taxprofiler```.
+For now only move the TaxProfiler_out folder containing the raw outputs from taxprofiler and the excel files Comparisons.xlsx and Out_ParsedExcel.xlsx to a new folder with the days date.
 
 
 ## Setting up the server config

@@ -12,8 +12,12 @@ source activate TaxProfiler
 
 set -x
 
-#nextflow /medstore/Development/Metagenomics/TaxProfiler/Taxprofiler-Metagenomics/Scripts/main.nf --OutputDir test --SampleSheet $1 -c /medstore/Development/Metagenomics/TaxProfiler/Taxprofiler-Metagenomics/configs/Mandalore_Taxprofiler_mod.config --IgnoreReadExtraction_krakenuniq --Metadata /medstore/Development/Metagenomics/TaxProfiler/InsilicoTester_SE/metadata.csv -resume 
+SampleSheet=/path/to/samplesheet.csv # Change here
+outDir=TaxProfiler_out
+Config=/medstore/Development/Metagenomics/TaxProfiler/Taxprofiler-Metagenomics/configs/Mandalore_Taxprofiler_mod.config
+Metadata=/path/to/metadata.csv
 
-nextflow /medstore/Development/Metagenomics/TaxProfiler/Taxprofiler-Metagenomics/Scripts/main.nf -N sanna.abrahamsson@gu.se --OutputDir test --SampleSheet $1 -c /medstore/Development/Metagenomics/TaxProfiler/Taxprofiler-Metagenomics/configs/Mandalore_Taxprofiler_mod.config --IgnoreReadExtraction_krakenuniq --Webstore --Webstore_mail -with-report test/summary_report.html -resume 
+#nextflow /medstore/Development/Metagenomics/TaxProfiler/Taxprofiler-Metagenomics/Scripts/main.nf -N sanna.abrahamsson@gu.se --OutputDir test --SampleSheet $1 -c /medstore/Development/Metagenomics/TaxProfiler/Taxprofiler-Metagenomics/configs/Mandalore_Taxprofiler_mod.config --IgnoreReadExtraction_krakenuniq --Webstore --Webstore_mail -with-report test/summary_report.html -resume 
 
+nextflow /medstore/Development/Metagenomics/TaxProfiler/Taxprofiler-Metagenomics/Scripts/main.nf -N sanna.abrahamsson@gu.se --OutputDir $outDir --SampleSheet $SampleSheet -c $Config --IgnoreReadExtraction_krakenuniq --Metadata $Metadata
 
