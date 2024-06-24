@@ -230,7 +230,6 @@ zcat fastas/*.faa.gz | diamond makedb --taxonmap prot.accession2taxid.FULL.gz --
 ```
 
 
-```
 
 ## Kraken2
 
