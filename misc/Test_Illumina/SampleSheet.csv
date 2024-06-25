@@ -1,0 +1,3 @@
+sample,run_accession,instrument_platform,fastq_1,fastq_2,fasta
+miseq_ncbi_2Bac2Vir2Arc,DNA,ILLUMINA,/medstore/Development/Metagenomics/TaxProfiler/InSilicoTester/Reads/miseq_ncbi_2Bac2Vir2Arc_R1.fastq.gz,/medstore/Development/Metagenomics/TaxProfiler/InSilicoTester/Reads/miseq_ncbi_2Bac2Vir2Arc_R2.fastq.gz,
+miseq_ncbi_Custom_Viral_bacteria_Archaea_Fungi,DNA,ILLUMINA,/medstore/Development/Metagenomics/TaxProfiler/InSilicoTester/Reads/miseq_ncbi_Custom_Viral_bacteria_Archaea_Fungi_R1.fastq.gz,/medstore/Development/Metagenomics/TaxProfiler/InSilicoTester/Reads/miseq_ncbi_Custom_Viral_bacteria_Archaea_Fungi_R2.fastq.gz,

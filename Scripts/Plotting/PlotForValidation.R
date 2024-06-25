@@ -145,7 +145,7 @@ for (i in 1:nrow(metadata)){
         split<-split(Bacteria_heatmap, r)
         for (p in 1:length(split)){
             s<-paste(p,"-bacteria ",Samplename,sep="")
-            pheatmap(split[[p]], cluster_cols=F, cluster_rows=F, color=heat_colors ,main=s, cellheight=10, cellwidth=30, breaks=breaksList)
+            pheatmap(split[[p]], cluster_cols=F, cluster_rows=F, color=heat_colors, cellheight=10, cellwidth=30, breaks=breaksList)
             }        
         dev.off()
     } else {
@@ -181,7 +181,7 @@ for (i in 1:nrow(metadata)){
         split<-split(Eukaryota_heatmap, r)
         for (p in 1:length(split)){
             s<-paste(p,"-eukaryote ",Samplename,sep="")
-            pheatmap(split[[p]], cluster_cols=F, cluster_rows=F, color=heat_colors ,main=s, cellheight=10, cellwidth=30, breaks=breaksList)
+            pheatmap(split[[p]], cluster_cols=F, cluster_rows=F, color=heat_colors, cellheight=10, cellwidth=30, breaks=breaksList)
             }
         dev.off()
     } else {
@@ -216,7 +216,7 @@ for (i in 1:nrow(metadata)){
         split<-split(Viral_heatmap, r)
         for (p in 1:length(split)){
             s<-paste(p,"-viral ",Samplename,sep="")
-            pheatmap(split[[p]], cluster_cols=F, cluster_rows=F, color=heat_colors ,main=s, cellheight=10, cellwidth=30, breaks=breaksList)
+            pheatmap(split[[p]], cluster_cols=F, cluster_rows=F, color=heat_colors, cellheight=10, cellwidth=30, breaks=breaksList)
             }        
         dev.off()
     } else {
