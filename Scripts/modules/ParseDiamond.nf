@@ -13,6 +13,9 @@ process PARSEDIAMOND {
 		
 	output:
 		path 'Diamond', emit: Diamond_outs
+		path 'Diamond/*_CountsForplotting.txt', emit: Diamond_outs_countfiles
+                path 'Diamond/Extras/*_SpeciesDomainLinkage.txt', emit: Diamond_outs_linkagefiles
+
 
 	script:
 	if (params.IgnoreReadExtraction_Diamond)

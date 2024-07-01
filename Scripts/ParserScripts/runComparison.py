@@ -20,7 +20,7 @@ def parseArgs(argv):
     Parsing the arguments
     '''
     parser = argparse.ArgumentParser(description='Takes the output from Parsed taxprofiler and Calculates to comparison Patient vs Control')
-    parser.add_argument("--Parsed_Taxprofiler_out", dest = 'parsedFolder', required=True, help ="Path to the output folder that is parsed from taxprofiler, contains the reads and the count tables")
+    parser.add_argument("--Tools", dest = 'Tools', required=True, help ="Path to the tool folders within the taxprofiler parsed output directory", nargs="+")
     parser.add_argument("--Metadata", dest = 'metadata', required=True, help ="csv file with metadata, Sample (samplename), Type (DNA or RNA), Group (P (patient) or C (control))")
     arguments = parser.parse_args(argv)
     return arguments
@@ -62,21 +62,22 @@ def ReadMetadata(metadata):
 
     return(comparisons)
 
-def readCountTables(parsedFolder, comparisons):
+def readCountTables(Tools, comparisons):
 
-    subfolders = [ f.path for f in os.scandir(parsedFolder) if f.is_dir() ]
+    #subfolders = [ f.path for f in os.scandir(parsedFolder) if f.is_dir() ]
     outExcel="Comparisons.xlsx"
     writer=pd.ExcelWriter(outExcel, engine='xlsxwriter')
 
 
     Mapping={}
 
-    for f in subfolders:
+    for f in Tools:
          tool=f.split("/")[-1]
-         mappingfiles=glob.glob(f+"/Extras/*_SpeciesDomainLinkage.txt")         
+         mappingfiles=glob.glob(f'{f}/Extras/*_SpeciesDomainLinkage.txt')
          Mapping[tool]=[]
          detec=[]
-         for m in mappingfiles:             
+         for m in mappingfiles:
+            print(m)
             with open(m, "r") as inf:
                 next(inf)
                 for l in inf:
@@ -89,9 +90,10 @@ def readCountTables(parsedFolder, comparisons):
                         detec.append(taxid)
 
                         
-    for f in subfolders:
+    for f in Tools:
         tool=f.split("/")[-1]
-        countfiles=glob.glob(f+"/*_CountsForplotting.txt")
+        countfiles=glob.glob(f'{f}/*_CountsForplotting.txt')
+        
         #counter=0
 
         AllPossibleTypes=['RNA','DNA']
@@ -104,9 +106,7 @@ def readCountTables(parsedFolder, comparisons):
 
         
         Mapping_df=pd.DataFrame(Mapping[tool], columns = ['TaxID','Species','Kingdom']) 
-
-        
-        
+            
         for t in Type:
             counter=0
             for c in countfiles:
@@ -131,7 +131,8 @@ def readCountTables(parsedFolder, comparisons):
                         df2=pd.read_table(c, index_col=None, header=0)
                         df2.columns=['TaxID','Species',sample]
                         df=df.merge(df2, left_on=['TaxID','Species'], right_on=['TaxID','Species'], how='outer')
-            
+
+                        
             df.fillna(0, inplace=True)
             df[df.columns[2:]]=df[df.columns[2:]]+1 # add the + to avoid division with the 0s 
             
@@ -139,9 +140,11 @@ def readCountTables(parsedFolder, comparisons):
                 norm=f'{sample}_Percent'
                 df[norm]=df[sample]/df[sample].sum()*100
                 df[sample]=df[sample]-1
+
                 
             normalizedcolumns=[col for col in df.columns if col.endswith('_Percent')]
             # Write the excel report
+
             
             sheet=f'{t}_{tool}'
             sheet_old=f'{t}_{tool}_old' # This is only kept for the validation
@@ -149,6 +152,7 @@ def readCountTables(parsedFolder, comparisons):
             Controls=comparisons[t][0]
             Patients=comparisons[t][1]
             subsetdf=df[['TaxID','Species']].copy()
+
             
             for p in Patients:
                 for c in Controls:
@@ -156,8 +160,7 @@ def readCountTables(parsedFolder, comparisons):
                     controlcolumns_both=[col for col in df.columns if c in col]
                     patientcolumn_norm=[col for col in normalizedcolumns if p in col]
                     controlcolumn_norm=[col for col in normalizedcolumns if c in col]
-                    
-                    
+                                        
                     if len(patientcolumn_norm) == 1 and len(controlcolumn_norm) == 1:
                         patientcolumn=patientcolumn_norm[0]
                         controlcolumn=controlcolumn_norm[0]
@@ -171,6 +174,7 @@ def readCountTables(parsedFolder, comparisons):
             raw=[]
             norm=[]
             fold=[]
+
 
             
             # Reporder so first is the raw values, next if the normalized values and last is the foldchange
@@ -251,12 +255,12 @@ def readCountTables(parsedFolder, comparisons):
     writer.close()
         
     
-def main(parsedFolder, metadata):
+def main(Tools, metadata):
     comparisons=ReadMetadata(metadata)
-    readCountTables(parsedFolder, comparisons)
+    readCountTables(Tools, comparisons)
     
     
 if __name__ == '__main__':
     args=parseArgs(sys.argv[1:])
-    main(args.parsedFolder, args.metadata)
+    main(args.Tools, args.metadata)
 
