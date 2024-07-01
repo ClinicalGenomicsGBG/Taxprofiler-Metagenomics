@@ -18,8 +18,4 @@ outDir=TaxProfiler_out
 Metadata=/medstore/Development/Metagenomics/TaxProfiler/Taxprofiler-Metagenomics/misc/Test_Illumina/Metadata.csv
 Config=/medstore/Development/Metagenomics/TaxProfiler/Taxprofiler-Metagenomics/configs/Mandalore_Taxprofiler_mod.config
 
-
 nextflow run /medstore/Development/Metagenomics/TaxProfiler/Taxprofiler-Metagenomics/Scripts/main.nf --OutputDir $outDir --SampleSheet $SampleSheet -c $Config --IgnoreReadExtraction_krakenuniq --Metadata $Metadata
-
-
-

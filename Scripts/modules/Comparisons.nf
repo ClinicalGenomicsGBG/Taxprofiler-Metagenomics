@@ -19,7 +19,7 @@ process COMPARISONS {
 	
 	source activate TaxProfiler
 
-	python /medstore/Development/Metagenomics/TaxProfiler/Taxprofiler-Metagenomics/Scripts/ParserScripts/runComparison.py  --Parsed_Taxprofiler_out "$launchDir/${params.OutputDir}/Taxprofiler_Parsed" --Metadata ${Metadata_c}
+	python /medstore/Development/Metagenomics/TaxProfiler/Taxprofiler-Metagenomics/Scripts/ParserScripts/runComparison.py  --Tools ${Diamond_outs} ${Kraken2_outs} ${KrakenUniq_outs} --Metadata ${Metadata_c}
 
 	"""		
 }

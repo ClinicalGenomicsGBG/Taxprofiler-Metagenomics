@@ -11,6 +11,8 @@ process PARSEKRAKEN2 {
 		
 	output:
 		path 'Kraken2', emit: Kraken2_outs
+		path 'Kraken2/*_CountsForplotting.txt', emit: Kraken2_outs_countfiles
+		path 'Kraken2/Extras/*_SpeciesDomainLinkage.txt', emit: Kraken2_outs_linkagefiles
 
 	script:
 	if (params.IgnoreReadExtraction_kraken2)
