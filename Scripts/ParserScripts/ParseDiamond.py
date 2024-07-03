@@ -231,10 +231,11 @@ def ParseDiamond(taxprofdict, taxdump, dptresh,dbsheet, IgnoreReadExtraction):
                                         for k, v in Species_withReads.items():
                                             if len(v) >= dptresh: 
                                                 taxa="_".join(k.split("_")[:-1]).replace(" ","")+"_"+str(k.split("_")[-1])
+                                                taxa=taxa.replace("/","_") # we cannot have taxas with "/" in the name, it will mess up the folder structure! 
                                                 outfoldersspecies="Diamond/Classified_Reads/"+taxa
                                                 try:
                                                     os.makedirs(outfoldersspecies)
-                                                except FileExistsError: 
+                                                except FileExistsError:
                                                     pass
                                                 outfq=outfoldersspecies+"/"+taxa+"_"+fname+".fastq"
                                                 with open(outfq, "w") as o: 
