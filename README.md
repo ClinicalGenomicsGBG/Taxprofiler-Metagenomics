@@ -31,12 +31,12 @@ source activate TaxProfiler
 
 ```
 
-Download the newer version (tested on 1.1.5)
+Download the newer version (tested on 1.1.8)
 
 
 ```
 
-nf-core download taxprofiler -r 1.1.5
+nf-core download taxprofiler -r 1.1.8
 
 or 
 

@@ -1,0 +1,4 @@
+tool,db_name,db_params,db_path
+kraken2,Kraken2_PlusPF_120124,,/medstore/databases/taxprofiler/databases/kraken2/Kraken2_PlusPF_120124
+diamond,Diamond_refseq223,,/medstore/databases/taxprofiler/databases/Diamond/Refseq_release_223
+krakenuniq,microbialdb_minus_kdb_20230808,,/medstore/databases/taxprofiler/databases/Krakenuniq/microbialdb_minus_kdb_20230808

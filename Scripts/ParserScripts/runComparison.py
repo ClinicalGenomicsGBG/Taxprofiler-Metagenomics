@@ -13,6 +13,9 @@ import time
 import xlsxwriter
 from datetime import date
 
+pd.options.display.max_columns = None
+pd.options.display.max_rows = 100
+
 
 
 def parseArgs(argv):
@@ -68,7 +71,7 @@ def readCountTables(Tools, comparisons):
     outExcel="Comparisons.xlsx"
     writer=pd.ExcelWriter(outExcel, engine='xlsxwriter')
 
-
+    
     Mapping={}
 
     for f in Tools:
@@ -77,7 +80,6 @@ def readCountTables(Tools, comparisons):
          Mapping[tool]=[]
          detec=[]
          for m in mappingfiles:
-            print(m)
             with open(m, "r") as inf:
                 next(inf)
                 for l in inf:
@@ -123,27 +125,51 @@ def readCountTables(Tools, comparisons):
                         sample=c.split("/")[-1].split("_CountsForplotting.txt")[0]
                         sample = "\t".join(sample.rsplit("_", 1)).split("\t")[0] # Remove everything after the last occurence of _
                 if sample in [x for xs in comparisons[t] for x in xs]: # Flatten the list
-                    counter+=1            
+                    #print(f, t, c)
+                    counter+=1
+                    df=pd.read_table(c, index_col=None, header=0)
+                    df.columns=['TaxID','Species',sample]
+                    norm=f'{sample}_Percent'
+                    df[norm]=(df[sample]+1)/(df[sample].sum()+len(df))*100 # Perform normalization directly instead at the matrix
                     if counter==1: # first df
-                        df=pd.read_table(c, index_col=None, header=0)
-                        df.columns=['TaxID','Species',sample]                
-                    else:
-                        df2=pd.read_table(c, index_col=None, header=0)
-                        df2.columns=['TaxID','Species',sample]
-                        df=df.merge(df2, left_on=['TaxID','Species'], right_on=['TaxID','Species'], how='outer')
+                        dfMerged=df.copy()
 
-                        
-            df.fillna(0, inplace=True)
-            df[df.columns[2:]]=df[df.columns[2:]]+1 # add the + to avoid division with the 0s 
+                    else: 
+                        dfMerged=dfMerged.merge(df, how='outer',on=['TaxID','Species']).fillna(0) # Merge and set NA to 0
+
+                    #else:
+                    #    df2=pd.read_table(c, index_col=None, header=0)
+                    #    df2.columns=['TaxID','Species',sample]
+                     #   df=df.merge(df2, left_on=['TaxID','Species'], right_on=['TaxID','Species'], how='outer')
+
+
+            for col in dfMerged.columns:
+                if not col.endswith("_Percent") and not col == "TaxID" and not col == "Species":
+                    dfMerged[col]=dfMerged[col].astype(int) # Convert from float to int, will be float as we introduced NAs in the merging
+
+            #print(t,f)
+            #print(dfMerged)
+                     
+            #df.fillna(0, inplace=True)
+            #df[df.columns[2:]]=df[df.columns[2:]]+1 # add the + to avoid division with the 0s 
             
-            for sample in df.columns[2:]: # Normalization is the value if percentage of total
-                norm=f'{sample}_Percent'
-                df[norm]=df[sample]/df[sample].sum()*100
-                df[sample]=df[sample]-1
+            #for sample in df.columns[2:]: # Normalization is the value if percentage of total
+             #   norm=f'{sample}_Percent'
+             #   df[norm]=df[sample]/df[sample].sum()*100
+             #   df[sample]=df[sample]-1
 
-                
-            normalizedcolumns=[col for col in df.columns if col.endswith('_Percent')]
+
+            #if t == "RNA":
+            #    if f == "Kraken2":
+            #        print(dfMerged)
+             
+            #print(dfMerged.columns)
+             
+            normalizedcolumns=[col for col in dfMerged.columns if col.endswith('_Percent')]
+            #countcolumns=[col for col in dfMerged.columns if not col.endswith('_Percent')]
             # Write the excel report
+
+            #print(normalizedcolumns)
 
             
             sheet=f'{t}_{tool}'
@@ -151,45 +177,54 @@ def readCountTables(Tools, comparisons):
             
             Controls=comparisons[t][0]
             Patients=comparisons[t][1]
-            subsetdf=df[['TaxID','Species']].copy()
-
+            subsetdf=dfMerged[['TaxID','Species']].copy()
             
             for p in Patients:
                 for c in Controls:
-                    patientcolumns_both=[col for col in df.columns if p in col]
-                    controlcolumns_both=[col for col in df.columns if c in col]
+                    patientcolumns_both=[col for col in dfMerged.columns if p in col]
+                    controlcolumns_both=[col for col in dfMerged.columns if c in col]
                     patientcolumn_norm=[col for col in normalizedcolumns if p in col]
                     controlcolumn_norm=[col for col in normalizedcolumns if c in col]
-                                        
                     if len(patientcolumn_norm) == 1 and len(controlcolumn_norm) == 1:
                         patientcolumn=patientcolumn_norm[0]
                         controlcolumn=controlcolumn_norm[0]
                         
-                        col=patientcolumn+"/"+controlcolumn
-                        subsetdf[patientcolumns_both]=df[patientcolumns_both]
-                        subsetdf[controlcolumns_both]=df[controlcolumns_both]
-                        subsetdf[col]=df[patientcolumn]/df[controlcolumn]
+                        col=f'{patientcolumn}+1/{controlcolumn}+1'
+                        #patientcolumn+"/"+controlcolumn
+
+                        print(patientcolumns_both)
+                        
+                        subsetdf[patientcolumns_both]=dfMerged[patientcolumns_both]
+                        subsetdf[controlcolumns_both]=dfMerged[controlcolumns_both]
+
+                        
+                        
+                        subsetdf[col]=(dfMerged[patientcolumn]+1)/(dfMerged[controlcolumn]+1)
 
 
             raw=[]
             norm=[]
             fold=[]
 
-
-            
+                        
             # Reporder so first is the raw values, next if the normalized values and last is the foldchange
             
             for s in subsetdf.columns:
-                if not 'norm' in s:
+                print(s)
+                if not 'Percent' in s:
                     raw.append(s)
                 elif not '/' in s:
                     norm.append(s)
                 else:
                     fold.append(s)
 
+
+            
+                    
             ordered=raw+norm+fold     
             subsetdf=subsetdf[ordered]
 
+            
             # Split based on kingdom
             
             dfMerged_kingdom=subsetdf.merge(Mapping_df, how='left', on=['TaxID','Species']) 
@@ -198,6 +233,7 @@ def readCountTables(Tools, comparisons):
             Archaea=Archaea.drop(columns=['Kingdom'])
             Archaea=Archaea.sort_values(by=Archaea.columns[-1], ascending=False)
             dimArchaea = len(Archaea.columns)
+
             Bacteria=dfMerged_kingdom[dfMerged_kingdom['Kingdom']=='Bacteria']
             Bacteria=Bacteria.drop(columns=['Kingdom'])
             Bacteria=Bacteria.sort_values(by=Bacteria.columns[-1], ascending=False)

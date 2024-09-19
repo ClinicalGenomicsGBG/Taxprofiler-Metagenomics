@@ -142,25 +142,25 @@ def ParseKrakenUniq(taxprofdict, dptresh, dbsheet, IgnoreReadExtraction):
                             
                         # Issue, PE outputs fasta, SE outputs fastq that is name fa.
                         
-                        fastaSE=f'{k}/{samplename}.classified.fasta.gz'
+                        fastqSE=f'{k}/{samplename}.classified.fastq.gz'
                         fastaPE=f'{k}/{samplename}.merged.classified.fasta.gz'
                         
-                        if (os.path.exists(fastaSE) or os.path.exists(fastaPE)) and not IgnoreReadExtraction:
+                        if (os.path.exists(fastqSE) or os.path.exists(fastaPE)) and not IgnoreReadExtraction:
 
-                            if os.path.exists(fastaSE):
+                            if os.path.exists(fastqSE):
                                 # We have SE reads
-                                fasta=fastaSE
+                                Records=SeqIO.to_dict(SeqIO.parse(gzip.open(fastqSE, "rt"),'fastq'))
                             if os.path.exists(fastaPE):
                                 # We have PE reads
-                                fasta=fastaPE
-                            
+                                Records=SeqIO.to_dict(SeqIO.parse(gzip.open(fastaPE, "rt"),'fasta'))
+                                
                             outfolderClassifiedReads="KrakenUniq/Classified_Reads"
                             try:
                                 os.makedirs(outfolderClassifiedReads)
                             except FileExistsError:
                                 pass
                             
-                            Records=SeqIO.to_dict(SeqIO.parse(gzip.open(fasta, "rt"),'fasta'))
+
                             for key, values in specieswithReadnames.items():
                                 
                                 if len(values)>=dptresh: 

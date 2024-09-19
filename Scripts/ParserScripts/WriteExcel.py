@@ -70,37 +70,35 @@ def SummarizeInExcel(Tools):
         tool=folder.split("/")[-1]
         Mapping_df = pd.DataFrame(Mapping[tool], columns = ['TaxID', 'Species', 'Kingdom']) 
         counter=0
+        print(tool)
         for f in files:
             counter+=1
             samplename=f.split("_CountsForplotting.txt")[0]
             df=pd.read_csv(folder+"/"+f, sep="\t")
             df=df.rename(columns={'Counts': samplename})
+            sample=df.columns[2]
+            norm=f'{sample}_Percent'
+            df[norm]=(df[sample]+1)/(df[sample].sum()+len(df))*100 # Perform normalization directly instead at the matrix 
             if counter==1:
                 dfMerged=df.copy()
-                
             else:
                 dfMerged=dfMerged.merge(df, how='outer',on=['TaxID','Species']).fillna(0) # Merge and set NA to 0
+
+        
+        
         cols=[i for i in dfMerged.columns if i not in ["TaxID","Species"]]
+        rawCountsColumns=[]
+        normalizedColumns=[]
         for col in cols:
-            dfMerged[col]=dfMerged[col].astype(int) # Convert from float to int, will be float as we introduced NAs in the merging
+            if not col.endswith("_Percent"):
+                dfMerged[col]=dfMerged[col].astype(int) # Convert from float to int, will be float as we introduced NAs in the merging
+                rawCountsColumns.append(col)
+            else:
+                normalizedColumns.append(col)
 
-
-        # Move TaxID and species to first and second column!
-        # Spits out performance warnings, fix that!
-        
-        dfMerged.insert(0, 'Species', dfMerged.pop('Species'))
-        dfMerged.insert(0, 'TaxID', dfMerged.pop('TaxID'))
-        
-        # Add normalization to the excel sheet also 
-
-        for sample in dfMerged.columns[2:]:
-            norm=f'{sample}_Percent'
-            dfMerged[norm]=(dfMerged[sample]+1)/(dfMerged[sample].sum()+len(dfMerged))*100 # Add a pseudocount to all sample and add the amount of rows to the sum
-            #dfMerged[norm]=dfMerged[sample]/dfMerged[sample].sum()*100
-
+        dfMerged=dfMerged[['TaxID','Species']+rawCountsColumns+normalizedColumns]
             
-        dfMerged_kingdom=dfMerged.merge(Mapping_df, how='left', on=['TaxID','Species']) # Merge with kingdom
-        
+        dfMerged_kingdom=dfMerged.merge(Mapping_df, how='left', on=['TaxID','Species']) # Merge with kingdom        
         Archaea=dfMerged_kingdom[dfMerged_kingdom['Kingdom']=='Archaea']
         Archaea=Archaea.drop(columns=['Kingdom'])
         dimArchaea = len(Archaea.columns)
@@ -113,6 +111,7 @@ def SummarizeInExcel(Tools):
         Viral=dfMerged_kingdom[dfMerged_kingdom['Kingdom']=='Viruses']
         Viral=Viral.drop(columns=['Kingdom'])
         dimViral=len(Viral.columns)
+        
         
         col=0
         row=1

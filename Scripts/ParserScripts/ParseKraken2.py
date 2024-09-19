@@ -178,6 +178,7 @@ def ParseKraken2(taxprofdict, dptresh, dbsheet, IgnoreReadExtraction):
                                                     
                                 for key, values in SpeciesWithFastq.items():
                                     speciesIdentifierkey=key.replace(" ","_").replace("(","").replace(")","").replace("/","") # Remove space, remove parantesis, remove from the species names
+                                    
                                     outfoldersspecies="Kraken2/Classified_Reads/"+speciesIdentifierkey
                                     try: # Generate the species folder if it is not there!
                                         os.makedirs(outfoldersspecies)
