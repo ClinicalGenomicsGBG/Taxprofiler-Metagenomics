@@ -2,7 +2,7 @@ process PARSEDIAMOND {
 	publishDir "${params.OutputDir}/Taxprofiler_Parsed",mode: 'copy', overwrite: true
        	label "single_thread"
 
-	module 'miniconda/4.14.0'
+	module 'micromamba/1.4.2'
 
 	input:
 		val Taxprofiler_out
@@ -21,18 +21,18 @@ process PARSEDIAMOND {
 	if (params.IgnoreReadExtraction_Diamond)
 	"""
 
-	source activate TaxProfiler
+	micromamba activate /medstore/projects/P23-015/Intermediate/MicroMambaEnvs/TaxProfiler_1.1.8
 
-	python /medstore/Development/Metagenomics/TaxProfiler/Taxprofiler-Metagenomics/Scripts/ParserScripts/ParseDiamond.py --Taxprofiler_out ${Taxprofiler_out} --DepthTresh ${DepthTresh_c} --Db_sheet ${DatabaseSheet_c} --taxdumpfile ${taxdumpgz_c} --IgnoreReadExtraction
+	ParseDiamond.py --Taxprofiler_out ${Taxprofiler_out} --DepthTresh ${DepthTresh_c} --Db_sheet ${DatabaseSheet_c} --taxdumpfile ${taxdumpgz_c} --IgnoreReadExtraction
 	"""
 	
 	else 
 
 	"""
 
-	source activate TaxProfiler
+	micromamba activate /medstore/projects/P23-015/Intermediate/MicroMambaEnvs/TaxProfiler_1.1.8
 	
-	python /medstore/Development/Metagenomics/TaxProfiler/Taxprofiler-Metagenomics/Scripts/ParserScripts/ParseDiamond.py --Taxprofiler_out ${Taxprofiler_out} --DepthTresh ${DepthTresh_c} --taxdumpfile ${taxdumpgz_c} --Db_sheet ${DatabaseSheet_c}
+	ParseDiamond.py --Taxprofiler_out ${Taxprofiler_out} --DepthTresh ${DepthTresh_c} --taxdumpfile ${taxdumpgz_c} --Db_sheet ${DatabaseSheet_c}
 
 	"""		
 

@@ -2,7 +2,7 @@ process PARSEKRAKEN2 {
 	publishDir "${params.OutputDir}/Taxprofiler_Parsed", mode: 'copy', overwrite: true
        	label "single_thread"
 
-	module 'miniconda/4.14.0'
+	module 'micromamba/1.4.2'
 
 	input:
 		val Taxprofiler_out
@@ -19,9 +19,9 @@ process PARSEKRAKEN2 {
 
 	"""
 	
-	source activate TaxProfiler
+	micromamba activate /medstore/projects/P23-015/Intermediate/MicroMambaEnvs/TaxProfiler_1.1.8
 
-	python /medstore/Development/Metagenomics/TaxProfiler/Taxprofiler-Metagenomics/Scripts/ParserScripts/ParseKraken2.py --Taxprofiler_out ${Taxprofiler_out} --DepthTresh ${DepthTresh_c} --Db_sheet ${DatabaseSheet_c} --IgnoreReadExtraction
+	ParseKraken2.py --Taxprofiler_out ${Taxprofiler_out} --DepthTresh ${DepthTresh_c} --Db_sheet ${DatabaseSheet_c} --IgnoreReadExtraction
 
 	"""		
 
@@ -29,9 +29,9 @@ process PARSEKRAKEN2 {
 
 	"""
 	
-	source activate TaxProfiler
+	micromamba activate /medstore/projects/P23-015/Intermediate/MicroMambaEnvs/TaxProfiler_1.1.8
 	
-	python /medstore/Development/Metagenomics/TaxProfiler/Taxprofiler-Metagenomics/Scripts/ParserScripts/ParseKraken2.py --Taxprofiler_out ${Taxprofiler_out} --DepthTresh ${DepthTresh_c} --Db_sheet ${DatabaseSheet_c}
+	ParseKraken2.py --Taxprofiler_out ${Taxprofiler_out} --DepthTresh ${DepthTresh_c} --Db_sheet ${DatabaseSheet_c}
 
 	"""
 }
