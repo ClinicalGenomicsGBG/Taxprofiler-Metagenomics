@@ -1,5 +1,4 @@
 #!/bin/bash -l
-
 #$ -S /bin/bash
 #$ -N TaxprofilerRun
 #$ -j y
@@ -7,17 +6,23 @@
 #$ -pe mpi 1
 #$ -q development.q
 
-module load miniconda/4.14.0
-source activate TaxProfiler
+module load micromamba/1.4.2
+micromamba activate /medstore/projects/P23-015/Intermediate/MicroMambaEnvs/TaxProfiler_1.1.8
 
-set -x
+# Setting up log
 
-SampleSheet=/path/to/samplesheet.csv # Change here
-outDir=TaxProfiler_out
-Config=/medstore/Development/Metagenomics/TaxProfiler/Taxprofiler-Metagenomics/configs/Mandalore_Taxprofiler_mod.config
-Metadata=/path/to/metadata.csv
+_timestamp_dir=`date '+%Y-%m-%d-%H-%M'`-`uuidgen -t`
+_base_log_dir="/medstore/logs/pipeline_logfiles/TaxProfiler"
+logpath=${_base_log_dir}/${_timestamp_dir}.log
 
-#nextflow /medstore/Development/Metagenomics/TaxProfiler/Taxprofiler-Metagenomics/Scripts/main.nf -N sanna.abrahamsson@gu.se --OutputDir test --SampleSheet $1 -c /medstore/Development/Metagenomics/TaxProfiler/Taxprofiler-Metagenomics/configs/Mandalore_Taxprofiler_mod.config --IgnoreReadExtraction_krakenuniq --Webstore --Webstore_mail -with-report test/summary_report.html -resume 
+# Setting up output names
 
-nextflow /medstore/Development/Metagenomics/TaxProfiler/Taxprofiler-Metagenomics/Scripts/main.nf -N sanna.abrahamsson@gu.se --OutputDir $outDir --SampleSheet $SampleSheet -c $Config --IgnoreReadExtraction_krakenuniq --Metadata $Metadata
+Timestamp=$(date +%y%m%d-%H%M%S)
 
+SampleSheet=$1 # Full path to sample sheet
+Runname=$2 # Full name to run
+
+outDir=${Runname}_TaxProfiler_out_${Timestamp}
+Config=/home/xabras/GIT_Repos/Taxprofiler-Metagenomics/configs/Mandalore_Taxprofiler_mod_updatedDB.config
+
+nextflow /home/xabras/GIT_Repos/Taxprofiler-Metagenomics/Scripts/main.nf --OutputDir $outDir --SampleSheet $SampleSheet -c $Config --IgnoreReadExtraction_krakenuniq --Webstore -resume &>> ${logpath}

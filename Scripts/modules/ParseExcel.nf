@@ -2,7 +2,7 @@ process PARSEEXCEL {
 	publishDir params.OutputDir,mode: 'copy', overwrite: true
        	label "single_thread" 
 
-	module 'miniconda/4.14.0'
+	module 'micromamba/1.4.2'
 
 	input:
 		val Diamond_outs
@@ -15,9 +15,9 @@ process PARSEEXCEL {
 	script:
 	"""
 	
-	source activate TaxProfiler
+	micromamba activate /medstore/projects/P23-015/Intermediate/MicroMambaEnvs/TaxProfiler_1.1.8
 
-	python /medstore/Development/Metagenomics/TaxProfiler/Taxprofiler-Metagenomics/Scripts/ParserScripts/WriteExcel.py --Tools ${Diamond_outs} ${Kraken2_outs} ${KrakenUniq_outs}
+	WriteExcel.py --Tools ${Diamond_outs} ${Kraken2_outs} ${KrakenUniq_outs}
 
 	"""		
 

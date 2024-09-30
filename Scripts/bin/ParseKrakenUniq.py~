@@ -1,4 +1,5 @@
-#!/usr/bin/py
+#!/usr/bin/env python
+
 
 import argparse
 
@@ -25,7 +26,7 @@ def parseArgs(argv):
     parser = argparse.ArgumentParser(description='Takes the output from taxprofiler and parses it')
     parser.add_argument("--Taxprofiler_out", dest = 'taxprofdict', required=True, help ="Output folder from taxprofiler (required)")
     parser.add_argument("--DepthTresh", dest = 'dptresh',default=10, type=int, help ="Minimum depth required to be reported (Default 10)")
-    parser.add_argument("--Db_sheet", dest = 'dbsheet', help ="Path to Database sheet")
+    parser.add_argument("--Db_sheet", dest = 'dbsheet', help ="Path to Database sheet (required)", required=True)
     parser.add_argument("--IgnoreReadExtraction", dest = 'IgnoreReadExtraction',help ="If used the reads will not be extracted (Optional)", action='store_true')
     arguments = parser.parse_args(argv)
     return arguments

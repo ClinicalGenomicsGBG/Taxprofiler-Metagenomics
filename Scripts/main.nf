@@ -2,6 +2,7 @@
 
 //nextflow.enable.dsl = 2
 
+
 // Help Section
 
 
@@ -98,15 +99,11 @@ workflow {
 	    COLLATE(PARSEEXCEL.out.ExcelOut,params.dummycomparison)
 	    }}}
 
-workflow.onComplete {
-
-   output:
-   stdout
-
-   """
-
-   printl "???"> /medstore/Development/Metagenomics/TaxProfiler/InsilicoTester_SE/execution.txt
-   
-   """
-
+workflow.onComplete{
+	println "\n"
+	println "Workflow completed:\t$workflow.complete"
+	println "Time Spent:\t$workflow.duration"
+	println "Exit status:\t$workflow.exitStatus"
+	println "Workflow launched at:\t$workflow.launchDir"
+	
 }

@@ -16,7 +16,7 @@ process COLLATE {
 	
 	source activate TaxProfiler
 
-	python /medstore/Development/Metagenomics/TaxProfiler/Taxprofiler-Metagenomics/Scripts/ParserScripts/Collate.py --FolderToMove "$launchDir/${params.OutputDir}" --mail
+	Collate.py --FolderToMove "$launchDir/${params.OutputDir}" --mail
 
 	"""
 
@@ -24,7 +24,7 @@ process COLLATE {
 
 	"""
 
-	python /medstore/Development/Metagenomics/TaxProfiler/Taxprofiler-Metagenomics/Scripts/ParserScripts/Collate.py --FolderToMove "$launchDir/${params.OutputDir}"	
+	Collate.py --FolderToMove "$launchDir/${params.OutputDir}"	
 	
 
 	"""
