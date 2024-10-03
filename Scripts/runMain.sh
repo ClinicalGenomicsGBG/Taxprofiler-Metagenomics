@@ -23,6 +23,7 @@ SampleSheet=$1 # Full path to sample sheet
 Runname=$2 # Full name to run
 
 outDir=${Runname}_TaxProfiler_out_${Timestamp}
-Config=/home/xabras/GIT_Repos/Taxprofiler-Metagenomics/configs/Mandalore_Taxprofiler_mod_updatedDB.config
+Config=/medstore/Development/Metagenomics/TaxProfiler/Taxprofiler-Metagenomics/configs/Mandalore_Taxprofiler_mod_updatedDB.config
 
-nextflow /home/xabras/GIT_Repos/Taxprofiler-Metagenomics/Scripts/main.nf --OutputDir $outDir --SampleSheet $SampleSheet -c $Config --IgnoreReadExtraction_krakenuniq --Webstore -resume &>> ${logpath}
+nextflow /medstore/Development/Metagenomics/TaxProfiler/Taxprofiler-Metagenomics/Scripts/main.nf --OutputDir $outDir --SampleSheet $SampleSheet -c $Config &>> ${logpath}
+

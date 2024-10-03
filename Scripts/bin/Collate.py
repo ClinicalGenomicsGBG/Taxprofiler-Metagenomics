@@ -26,7 +26,7 @@ def parseArgs(argv):
 
 
 def copyToWebstore(folder):
-    pathtowebstore="/medstore/Development/Metagenomics/TaxProfiler/InsilicoTester_SE/TestHome/Transfer"
+    pathtowebstore="/webstore/clinical/development/Taxprofiler/"
     folder_base=folder.split("/")[-1] # Make sure we are only using the folder name, not the entire path
     folderinWebstore=f'{pathtowebstore}/{folder_base}'
     os.mkdir(folderinWebstore)

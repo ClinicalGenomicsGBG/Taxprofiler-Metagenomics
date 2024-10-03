@@ -143,16 +143,18 @@ def ParseKrakenUniq(taxprofdict, dptresh, dbsheet, IgnoreReadExtraction):
                         # Issue, PE outputs fasta, SE outputs fastq that is name fa.
                         
                         fastqSE=f'{k}/{samplename}.classified.fastq.gz'
-                        fastaPE=f'{k}/{samplename}.merged.classified.fasta.gz'
+                        fastqPE=f'{k}/{samplename}.merged.classified.fastq.gz'
                         
-                        if (os.path.exists(fastqSE) or os.path.exists(fastaPE)) and not IgnoreReadExtraction:
+                        if (os.path.exists(fastqSE) or os.path.exists(fastqPE)) and not IgnoreReadExtraction:
 
+                            print(fastqPE)
+                            
                             if os.path.exists(fastqSE):
                                 # We have SE reads
                                 Records=SeqIO.to_dict(SeqIO.parse(gzip.open(fastqSE, "rt"),'fastq'))
-                            if os.path.exists(fastaPE):
+                            if os.path.exists(fastqPE):
                                 # We have PE reads
-                                Records=SeqIO.to_dict(SeqIO.parse(gzip.open(fastaPE, "rt"),'fasta'))
+                                Records=SeqIO.to_dict(SeqIO.parse(gzip.open(fastqPE, "rt"),'fasta')) # It is fasta even if it says fastq, thought this was fixed already? 
                                 
                             outfolderClassifiedReads="KrakenUniq/Classified_Reads"
                             try:
@@ -176,7 +178,6 @@ def ParseKrakenUniq(taxprofdict, dptresh, dbsheet, IgnoreReadExtraction):
                                         for reads in values:
                                             rec=Records[reads].format("fasta").strip()
                                             print(rec, file=o)
-
 
 
                                             

@@ -1,5 +1,4 @@
 #!/bin/bash -l
-
 #$ -S /bin/bash
 #$ -N TaxprofilerRun
 #$ -j y
@@ -7,19 +6,24 @@
 #$ -pe mpi 1
 #$ -q development.q
 
-module load miniconda/4.14.0
-source activate TaxProfiler
+module load micromamba/1.4.2
+micromamba activate /medstore/projects/P23-015/Intermediate/MicroMambaEnvs/TaxProfiler_1.1.8
 
-set -x
+# Setting up log
 
+_timestamp_dir=`date '+%Y-%m-%d-%H-%M'`-`uuidgen -t`
+_base_log_dir="/medstore/logs/pipeline_logfiles/TaxProfiler"
+logpath=${_base_log_dir}/${_timestamp_dir}.log
 
-SampleSheet=/medstore/Development/Metagenomics/TaxProfiler/Taxprofiler-Metagenomics/misc/Test_IonTorrent/SampleSheet.csv
-outDir=TaxProfiler_out
-Metadata=/medstore/Development/Metagenomics/TaxProfiler/Taxprofiler-Metagenomics/misc/Test_IonTorrent/Metadata.csv
-Config=/medstore/Development/Metagenomics/TaxProfiler/Taxprofiler-Metagenomics/configs/Mandalore_Taxprofiler_mod.config
+# Setting up output names
 
+Timestamp=$(date +%y%m%d-%H%M%S)
 
-nextflow run /medstore/Development/Metagenomics/TaxProfiler/Taxprofiler-Metagenomics/Scripts/main.nf --OutputDir $outDir --SampleSheet $SampleSheet -c $Config --IgnoreReadExtraction_krakenuniq --Metadata $Metadata
+SampleSheet=$1 # Full path to sample sheet
+Runname=$2 # Full name to run
 
+outDir=${Runname}_TaxProfiler_out_${Timestamp}
+Config=/medstore/Development/Metagenomics/TaxProfiler/Taxprofiler-Metagenomics/configs/Mandalore_Taxprofiler_mod_updatedDB.config
 
+nextflow /medstore/Development/Metagenomics/TaxProfiler/Taxprofiler-Metagenomics/Scripts/main.nf --OutputDir $outDir --SampleSheet $SampleSheet -c $Config &>> ${logpath}
 
