@@ -25,5 +25,5 @@ Runname=$2 # Full name to run
 outDir=${Runname}_TaxProfiler_out_${Timestamp}
 Config=/medstore/Development/Metagenomics/TaxProfiler/Taxprofiler-Metagenomics/configs/Mandalore_Taxprofiler_mod_updatedDB.config
 
-nextflow /medstore/Development/Metagenomics/TaxProfiler/Taxprofiler-Metagenomics/Scripts/main.nf --OutputDir $outDir --SampleSheet $SampleSheet -c $Config -resume &>> ${logpath}
+nextflow /medstore/Development/Metagenomics/TaxProfiler/Taxprofiler-Metagenomics/Scripts/main.nf --OutputDir $outDir --SampleSheet $SampleSheet -c $Config &>> ${logpath}
 
